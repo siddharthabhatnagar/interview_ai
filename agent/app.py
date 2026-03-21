@@ -508,7 +508,7 @@ class InterviewerAgent(Agent):
         questions = get_questions_for_interview(interview_type, difficulty_level)
         questions_text = json.dumps(questions, indent=2)
 
-        llm = openai.LLM.with_cerebras(model="gpt-oss-120b")
+        llm = openai.LLM.with_cerebras(model="llama3.1-8b")
         stt = deepgram.STT()
         tts = deepgram.TTS()
         vad = silero.VAD.load()
