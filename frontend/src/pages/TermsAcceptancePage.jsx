@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Navbar } from '../components/Navbar';
@@ -6,39 +6,25 @@ import { Button } from '../components/Button';
 
 export function TermsAcceptancePage() {
   const navigate = useNavigate();
-  const { currentUser, token, acceptTerms, loading, error, getMe } = useAuthStore();
+  const { currentUser, token, acceptTerms, loading, error } = useAuthStore();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [localError, setLocalError] = useState('');
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  useEffect(() => {
-    // If no token, redirect to login
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+  console.log('TermsAcceptancePage - currentUser:', currentUser);
+  console.log('TermsAcceptancePage - token:', token);
+  console.log('TermsAcceptancePage - loading:', loading);
 
-    // If currentUser is loaded
-    if (currentUser) {
-      setIsLoadingUser(false);
-      // If already accepted terms, go to dashboard
-      if (currentUser.termsAccepted) {
-        navigate('/dashboard');
-      }
-      return;
-    }
+  // If user already accepted, redirect to dashboard
+  if (currentUser?.termsAccepted) {
+    navigate('/dashboard');
+    return null;
+  }
 
-    // Fetch user data if not already loaded
-    if (!currentUser && token) {
-      getMe()
-        .then(() => {
-          setIsLoadingUser(false);
-        })
-        .catch(() => {
-          setIsLoadingUser(false);
-        });
-    }
-  }, [token, currentUser, navigate, getMe]);
+  // If no token, redirect to login
+  if (!token) {
+    navigate('/login');
+    return null;
+  }
 
   const handleAcceptTerms = async () => {
     if (!termsAccepted) {
@@ -51,35 +37,10 @@ export function TermsAcceptancePage() {
       await acceptTerms(true, '1.0');
       navigate('/dashboard');
     } catch (err) {
+      console.error('Accept terms error:', err);
       setLocalError(err.response?.data?.message || 'Failed to accept terms');
     }
   };
-
-  // Show loading spinner while fetching user data
-  if (isLoadingUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block">
-            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          </div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no currentUser after loading, something went wrong
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">Session expired. Please sign in again.</p>
-          <Button onClick={() => navigate('/login')}>Go to Login</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -93,7 +54,7 @@ export function TermsAcceptancePage() {
                 Welcome to IntervuAI!
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Before you can start using IntervuAI, we need you to review and accept our Terms of Service and Privacy Policy.
+                Before you can start using IntervuAI, please review and accept our Terms of Service and Privacy Policy.
               </p>
             </div>
 
@@ -105,65 +66,70 @@ export function TermsAcceptancePage() {
 
             <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-8 rounded">
               <p className="text-blue-900 dark:text-blue-200 text-sm">
-                Please take a moment to read our Terms of Service and Privacy Policy. These documents outline your rights and responsibilities as an IntervuAI user, including important information about our <strong>non-refund policy</strong> for credits and subscriptions.
+                <strong>Important:</strong> By accepting these terms, you acknowledge our <strong>non-refund policy</strong> for all credits and subscriptions. All purchases are final.
               </p>
             </div>
 
-            <div className="space-y-3 mb-8 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Review Legal Documents:</h3>
-              <div className="flex items-center gap-3">
+            <div className="space-y-3 mb-8 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">📋 Please Review:</h3>
+              <div className="flex items-center justify-between">
                 <a
                   href="/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 font-semibold"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline font-semibold text-sm"
                 >
                   📄 Terms of Service
-                  <span className="text-xs text-gray-500">(opens in new tab)</span>
                 </a>
+                <span className="text-xs text-gray-500 dark:text-gray-400">(new tab)</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between border-t border-gray-300 dark:border-gray-600 pt-3">
                 <a
                   href="/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 font-semibold"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline font-semibold text-sm"
                 >
                   📄 Privacy Policy
-                  <span className="text-xs text-gray-500">(opens in new tab)</span>
                 </a>
+                <span className="text-xs text-gray-500 dark:text-gray-400">(new tab)</span>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 mb-8 bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-              <input
-                type="checkbox"
-                id="acceptTerms"
-                checked={termsAccepted}
-                onChange={(e) => {
-                  setTermsAccepted(e.target.checked);
-                  setLocalError('');
-                }}
-                className="mt-1.5 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              />
-              <label htmlFor="acceptTerms" className="flex-1 cursor-pointer">
-                <span className="font-semibold text-gray-900 dark:text-white">I accept the Terms of Service and Privacy Policy</span>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-                  By checking this box, I acknowledge that I have read and agree to be bound by the Terms of Service and Privacy Policy, <strong>including the non-refund policy for all purchases and credits.</strong>
-                </p>
+            {/* Checkbox */}
+            <div className="mb-8">
+              <label className="flex items-start gap-3 cursor-pointer p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => {
+                    setTermsAccepted(e.target.checked);
+                    setLocalError('');
+                  }}
+                  className="mt-1 h-5 w-5 text-blue-600 rounded cursor-pointer"
+                />
+                <div className="flex-1">
+                  <span className="font-semibold text-gray-900 dark:text-white text-sm block">
+                    I accept the Terms of Service and Privacy Policy
+                  </span>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Including the non-refund policy for all purchases, credits, and subscriptions
+                  </p>
+                </div>
               </label>
             </div>
 
+            {/* Accept Button */}
             <Button
               onClick={handleAcceptTerms}
               disabled={loading || !termsAccepted}
-              className="w-full py-3 text-base font-semibold"
+              className="w-full py-3 font-semibold"
             >
-              {loading ? 'Accepting Terms...' : 'Accept and Continue to Dashboard'}
+              {loading ? 'Accepting Terms...' : '✓ Accept and Continue'}
             </Button>
 
-            <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-6">
-              You must accept these terms to use IntervuAI and access all features.
+            <p className="text-center text-gray-600 dark:text-gray-400 text-xs mt-6 px-4">
+              You must accept these terms to continue using IntervuAI
             </p>
           </div>
         </div>
