@@ -55,7 +55,26 @@ const userSchema = new mongoose.Schema(
     
     // Payment
     razorpayCustomerId: String,
-    
+
+    // Legal & Compliance
+    termsAccepted: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    termsAcceptedAt: {
+      type: Date,
+      default: null,
+    },
+    termsVersion: {
+      type: String,
+      default: '1.0',
+    },
+    termsAcceptanceIP: {
+      type: String,
+      default: null,
+    },
+
     // Account status
     isActive: {
       type: Boolean,

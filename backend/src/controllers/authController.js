@@ -11,11 +11,20 @@ import { OAuth2Client } from 'google-auth-library';
  * @body {name, email, password}
  */
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, termsAccepted, termsVersion } = req.body;
 
   // Validation
   if (!name || !email || !password) {
     throw new ApiError(400, 'Name, email, and password are required');
+  }
+
+  // Validate terms acceptance
+  if (!termsAccepted) {
+    throw new ApiError(400, 'You must accept the Terms of Service to create an account');
+  }
+
+  if (!termsVersion || termsVersion !== '1.0') {
+    throw new ApiError(400, 'Please accept the latest Terms of Service');
   }
 
   const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -33,8 +42,16 @@ export const register = asyncHandler(async (req, res) => {
     throw new ApiError(409, 'User with this email already exists');
   }
 
-  // Create user
-  const user = await User.create({ name, email, password });
+  // Create user with terms acceptance data
+  const user = await User.create({
+    name,
+    email,
+    password,
+    termsAccepted: true,
+    termsAcceptedAt: new Date(),
+    termsVersion: '1.0',
+    termsAcceptanceIP: req.ip || req.connection.remoteAddress || null,
+  });
 
   // Generate JWT token
   const token = jwt.sign(user.getJWT(), env.JWT_SECRET, {
@@ -49,6 +66,7 @@ export const register = asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         subscriptionPlan: user.subscriptionPlan,
+        credits: user.credits,
       },
     }, 'User registered successfully')
   );
@@ -146,13 +164,19 @@ export const googleAuth = asyncHandler(async (req, res) => {
 
   // Find or create user
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
+  let isNewUser = false;
+
   if (!user) {
+    isNewUser = true;
     user = await User.create({
       name,
       email,
       googleId,
       profilePicture: picture,
       password: `google_${googleId}_${Date.now()}`, // placeholder, never used
+      termsAccepted: false, // OAuth users must accept terms separately
+      termsAcceptedAt: null,
+      termsVersion: null,
     });
   } else if (!user.googleId) {
     // Link Google ID to existing email account
@@ -172,7 +196,9 @@ export const googleAuth = asyncHandler(async (req, res) => {
         email: user.email,
         subscriptionPlan: user.subscriptionPlan,
         credits: user.credits,
+        termsAccepted: user.termsAccepted, // Include this for frontend
       },
+      requiresTermsAcceptance: isNewUser && !user.termsAccepted, // Flag for frontend
     }, 'Google sign-in successful')
   );
 });
@@ -195,5 +221,51 @@ export const refreshToken = asyncHandler(async (req, res) => {
 
   res.json(
     new ApiResponse(200, { token }, 'Token refreshed successfully')
+  );
+});
+
+/**
+ * Accept terms of service (for OAuth users)
+ * @route POST /api/auth/accept-terms
+ * @middleware authenticate
+ */
+export const acceptTerms = asyncHandler(async (req, res) => {
+  const { termsAccepted, termsVersion } = req.body;
+  const userId = req.user._id; // from auth middleware
+
+  if (!termsAccepted) {
+    throw new ApiError(400, 'Terms acceptance is required');
+  }
+
+  if (!termsVersion || termsVersion !== '1.0') {
+    throw new ApiError(400, 'Invalid terms version');
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
+      termsVersion: '1.0',
+      termsAcceptanceIP: req.ip || req.connection.remoteAddress || null,
+    },
+    { new: true }
+  );
+
+  res.json(
+    new ApiResponse(
+      200,
+      {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          subscriptionPlan: user.subscriptionPlan,
+          credits: user.credits,
+          termsAccepted: user.termsAccepted,
+        },
+      },
+      'Terms accepted successfully'
+    )
   );
 });

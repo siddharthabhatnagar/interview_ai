@@ -6,6 +6,7 @@ import {
   getMe,
   refreshToken,
   googleAuth,
+  acceptTerms,
 } from '../controllers/authController.js';
 import verifyJWT from '../middleware/auth.js';
 
@@ -19,5 +20,6 @@ router.post('/google', googleAuth);
 // Protected routes
 router.get('/me', verifyJWT, getMe);
 router.post('/refresh', verifyJWT, refreshToken);
+router.post('/accept-terms', verifyJWT, acceptTerms);
 
 export default router;
