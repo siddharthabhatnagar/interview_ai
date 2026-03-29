@@ -6,25 +6,9 @@ import { Button } from '../components/Button';
 
 export function TermsAcceptancePage() {
   const navigate = useNavigate();
-  const { currentUser, token, acceptTerms, loading, error } = useAuthStore();
+  const { currentUser, acceptTerms, loading, error } = useAuthStore();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [localError, setLocalError] = useState('');
-
-  console.log('TermsAcceptancePage - currentUser:', currentUser);
-  console.log('TermsAcceptancePage - token:', token);
-  console.log('TermsAcceptancePage - loading:', loading);
-
-  // If user already accepted, redirect to dashboard
-  if (currentUser?.termsAccepted) {
-    navigate('/dashboard');
-    return null;
-  }
-
-  // If no token, redirect to login
-  if (!token) {
-    navigate('/login');
-    return null;
-  }
 
   const handleAcceptTerms = async () => {
     if (!termsAccepted) {

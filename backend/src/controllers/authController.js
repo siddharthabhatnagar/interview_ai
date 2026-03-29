@@ -67,6 +67,7 @@ export const register = asyncHandler(async (req, res) => {
         email: user.email,
         subscriptionPlan: user.subscriptionPlan,
         credits: user.credits,
+        termsAccepted: user.termsAccepted,
       },
     }, 'User registered successfully')
   );
@@ -115,6 +116,8 @@ export const login = asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         subscriptionPlan: user.subscriptionPlan,
+        credits: user.credits,
+        termsAccepted: user.termsAccepted,
       },
     }, 'Login successful')
   );

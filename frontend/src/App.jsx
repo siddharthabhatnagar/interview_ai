@@ -16,10 +16,22 @@ import { TermsAcceptancePage } from './pages/TermsAcceptancePage';
 import { DocsPage } from './pages/DocsPage';
 
 function PrivateRoute({ children }) {
-  const { token, currentUser } = useAuthStore();
+  const { token, currentUser, loading } = useAuthStore();
 
   if (!token) {
     return <Navigate to="/login" />;
+  }
+
+  // If still loading user data, don't redirect yet
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // If user hasn't accepted terms, redirect to terms acceptance page
