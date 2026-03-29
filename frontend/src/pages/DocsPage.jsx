@@ -65,10 +65,10 @@ const CREDIT_TABLE = [
 ];
 
 const PLANS = [
-  { name: 'Free', price: '₹0', credits: 3, best: 'Trying it out', color: 'gray' },
-  { name: 'Starter', price: '₹499 / $5.99', credits: 15, best: '5–7 interviews', color: 'blue' },
-  { name: 'Growth', price: '₹999 / $11.99', credits: 35, best: '12–17 interviews', color: 'indigo' },
-  { name: 'Pro', price: '₹1999 / $23.99', credits: 80, best: '25–40 interviews', color: 'purple' },
+  { name: 'Free Trial', price: '₹0', credits: 3, best: '1-2 interviews', color: 'gray' },
+  { name: 'Basic', price: '₹299 / $3.59', credits: 8, best: '4-5 interviews', color: 'blue' },
+  { name: 'Growth', price: '₹799 / $9.59', credits: 30, best: '15+ interviews', color: 'indigo' },
+  { name: 'Pro', price: '₹1999 / $23.99', credits: 100, best: '50+ interviews', color: 'purple' },
 ];
 
 const DIMENSIONS = [
@@ -85,7 +85,7 @@ const FAQS = [
   { q: 'How are scores calculated?', a: 'Each answer is independently scored across 5 dimensions (Technical Accuracy, Communication, Problem Solving, Depth, Experience) on a 0–100 scale. Your overall score is the average across all questions.' },
   { q: 'Can I upload my resume?', a: 'Yes! You can paste your resume text and/or a target job description before starting. The AI will personalize questions based on your experience and the role you\'re targeting.' },
   { q: 'What\'s the difference between Basic, Detailed, and Premium?', a: 'Basic gives concise feedback. Detailed adds multi-section breakdowns. Premium gives the full package: improvement tips per question, estimated seniority level, a personalized learning roadmap, and how you compare to the market.' },
-  { q: 'How many interviews can I do per plan?', a: 'It depends on your settings. A Quick + Basic interview costs 1 credit, while a Deep Dive + Premium costs 5 credits. Starter (15 credits) gets you 3–15 interviews depending on settings.' },
+  { q: 'How many interviews can I do per plan?', a: 'It depends on your settings. A Quick + Basic interview costs 1 credit, while a Deep Dive + Premium costs 5 credits. Free Trial (3 credits) gets 1-2 interviews, Basic (8 credits) gets 4-5, Growth (30 credits) gets 15+, and Pro (100 credits) gets 50+ depending on your chosen settings.' },
   { q: 'Is my data secure?', a: 'Yes. Audio is processed in real-time and not stored. Interview transcripts are stored securely in MongoDB Atlas with encryption. We never share your data with third parties.' },
   { q: 'What difficulty levels are available?', a: 'Beginner (0–1 year experience), Intermediate (2–4 years), and Advanced (5+ years). The AI adapts difficulty dynamically within the session based on your performance.' },
 ];
