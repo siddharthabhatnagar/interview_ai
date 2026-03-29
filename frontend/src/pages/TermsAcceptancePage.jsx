@@ -6,18 +6,39 @@ import { Button } from '../components/Button';
 
 export function TermsAcceptancePage() {
   const navigate = useNavigate();
-  const { currentUser, acceptTerms, loading, error } = useAuthStore();
+  const { currentUser, token, acceptTerms, loading, error, getMe } = useAuthStore();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   useEffect(() => {
-    // Redirect if user already accepted terms or if not logged in
-    if (!currentUser) {
+    // If no token, redirect to login
+    if (!token) {
       navigate('/login');
-    } else if (currentUser.termsAccepted) {
-      navigate('/dashboard');
+      return;
     }
-  }, [currentUser, navigate]);
+
+    // If currentUser is loaded
+    if (currentUser) {
+      setIsLoadingUser(false);
+      // If already accepted terms, go to dashboard
+      if (currentUser.termsAccepted) {
+        navigate('/dashboard');
+      }
+      return;
+    }
+
+    // Fetch user data if not already loaded
+    if (!currentUser && token) {
+      getMe()
+        .then(() => {
+          setIsLoadingUser(false);
+        })
+        .catch(() => {
+          setIsLoadingUser(false);
+        });
+    }
+  }, [token, currentUser, navigate, getMe]);
 
   const handleAcceptTerms = async () => {
     if (!termsAccepted) {
@@ -34,8 +55,30 @@ export function TermsAcceptancePage() {
     }
   };
 
+  // Show loading spinner while fetching user data
+  if (isLoadingUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block">
+            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          </div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no currentUser after loading, something went wrong
   if (!currentUser) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400 mb-4">Session expired. Please sign in again.</p>
+          <Button onClick={() => navigate('/login')}>Go to Login</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
