@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { Button } from './Button';
@@ -6,6 +6,7 @@ import { BookOpen } from 'lucide-react';
 
 export function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
 
@@ -14,14 +15,22 @@ export function Navbar() {
     navigate('/login');
   };
 
+  const handleLogoClick = () => {
+    // Don't navigate if user hasn't accepted terms yet
+    if (location.pathname === '/accept-terms') {
+      return;
+    }
+    navigate('/dashboard');
+  };
+
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center cursor-pointer"
+            onClick={handleLogoClick}
+            className={`flex items-center ${location.pathname !== '/accept-terms' ? 'cursor-pointer' : ''}`}
           >
             <h1 className="text-2xl font-bold text-blue-600">IntervuAI</h1>
           </div>

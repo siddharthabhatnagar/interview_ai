@@ -1,11 +1,11 @@
-export function Button({ children, variant = 'primary', size = 'md', className = '', ...props }) {
+export function Button({ children, variant = 'primary', size = 'md', className = '', disabled = false, ...props }) {
   const baseStyles = 'font-semibold rounded-lg transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
+
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-60',
+    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60',
+    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 disabled:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60',
   };
 
   const sizes = {
@@ -17,6 +17,7 @@ export function Button({ children, variant = 'primary', size = 'md', className =
   return (
     <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={disabled}
       {...props}
     >
       {children}
