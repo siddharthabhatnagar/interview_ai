@@ -232,7 +232,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
  */
 export const acceptTerms = asyncHandler(async (req, res) => {
   const { termsAccepted, termsVersion } = req.body;
-  const userId = req.user._id; // from auth middleware
+  const userId = req.user.userId; // from auth middleware
 
   if (!termsAccepted) {
     throw new ApiError(400, 'Terms acceptance is required');

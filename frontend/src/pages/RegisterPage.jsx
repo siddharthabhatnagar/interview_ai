@@ -159,6 +159,12 @@ export function RegisterPage() {
             </label>
           </div>
           {fieldErrors.termsAccepted && <p className="text-sm text-red-500">{fieldErrors.termsAccepted}</p>}
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full"
+          >
             {loading ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
