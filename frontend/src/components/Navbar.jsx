@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { Button } from './Button';
+import { BookOpen } from 'lucide-react';
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -43,6 +44,13 @@ export function Navbar() {
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium text-sm"
                 >
                   Home
+                </button>
+                <button
+                  onClick={() => navigate('/docs')}
+                  className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Docs</span>
                 </button>
                 <button
                   onClick={() => navigate('/pricing')}

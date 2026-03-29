@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { CheckCircle, Mic, Brain, BarChart3, Zap, Shield, Users } from 'lucide-react';
+import { CheckCircle, Mic, Brain, BarChart3, Zap, Shield, Users, BookOpen } from 'lucide-react';
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -16,6 +16,13 @@ export function LandingPage() {
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-2xl font-bold text-blue-600">IntervuAI</h1>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/docs')}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                <BookOpen className="w-5 h-5" />
+                <span>Docs</span>
+              </button>
               <button
                 onClick={() => navigate('/pricing')}
                 className="text-gray-600 hover:text-gray-900 font-medium"
