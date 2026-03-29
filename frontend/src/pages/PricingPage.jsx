@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { CheckCircle, X } from 'lucide-react';
+import { CheckCircle, X, BookOpen } from 'lucide-react';
 import apiClient from '../services/apiClient';
 
 const plans = [
@@ -163,6 +163,13 @@ export function PricingPage() {
               IntervuAI
             </h1>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/docs')}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                <BookOpen className="w-5 h-5" />
+                <span>Docs</span>
+              </button>
               {token ? (
                 <Button onClick={() => navigate('/dashboard')} variant="secondary">
                   Dashboard
