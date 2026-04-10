@@ -540,32 +540,34 @@ export const saveLiveResults = asyncHandler(async (req, res) => {
  * @route POST /api/interview/:id/complete-live
  * @middleware verifyJWT
  * @body {transcript}
+ * 
+ * ✅ FIXED VERSION - Uses Promise.all() to wait for all evaluations
  */
 export const completeLiveInterview = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.userId;
-
+ 
   const interview = await Interview.findById(id);
   if (!interview) {
     throw new ApiError(404, 'Interview not found');
   }
-
+ 
   if (interview.userId.toString() !== userId) {
     throw new ApiError(403, 'You do not have access to this interview');
   }
-
+ 
   if (interview.status === 'completed') {
     return res.json(new ApiResponse(200, interview, 'Interview already completed'));
   }
-
+ 
   const { transcript } = req.body;
-
+ 
   if (transcript && Array.isArray(transcript) && transcript.length > 0) {
-    // Parse and evaluate transcript
+    // Parse transcript into questions
     const questions = [];
     let currentQuestion = null;
     let questionNumber = 0;
-
+ 
     for (const entry of transcript) {
       if (entry.role === 'interviewer' || entry.role === 'agent') {
         if (currentQuestion && currentQuestion.candidateResponse) {
@@ -589,13 +591,14 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
         currentQuestion.responseReceivedAt = new Date();
       }
     }
-
+ 
     if (currentQuestion && currentQuestion.candidateResponse) {
       questions.push(currentQuestion);
     }
-
-    // Evaluate
-    for (const q of questions) {
+ 
+    // 🔥 CRITICAL FIX: Use Promise.all() to evaluate ALL questions in parallel
+    // This ensures we wait for ALL evaluations to complete before saving
+    const evaluationPromises = questions.map(async (q) => {
       if (q.candidateResponse && q.candidateResponse.trim().length > 10) {
         try {
           const evaluation = await evaluateResponse(
@@ -608,6 +611,7 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
               analysisType: interview.analysisType || 'basic',
             }
           );
+          
           q.aiEvaluation = {
             score: evaluation.score,
             technicalAccuracy: evaluation.technicalAccuracy,
@@ -621,28 +625,41 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
             followUpQuestion: evaluation.followUpQuestion || '',
           };
         } catch (error) {
-          q.aiEvaluation = { score: 50, feedback: 'Evaluation pending.', followUpQuestion: '' };
+          console.error(`Failed to evaluate Q${q.questionNumber}:`, error.message);
+          q.aiEvaluation = { 
+            score: 50, 
+            feedback: 'Evaluation could not be completed.', 
+            followUpQuestion: '' 
+          };
         }
       }
-    }
-
+      return q;
+    });
+ 
+    // ✅ WAIT for ALL evaluations to complete before proceeding
+    await Promise.all(evaluationPromises);
+ 
     if (questions.length > 0) {
       interview.questions = questions;
       interview.totalQuestions = questions.length;
       interview.questionsAnswered = questions.filter(q => q.candidateResponse).length;
-
-      const scores = questions.filter(q => q.aiEvaluation?.score).map(q => q.aiEvaluation.score);
+ 
+      // Calculate overall score from evaluated questions
+      const scores = questions
+        .filter(q => q.aiEvaluation?.score)
+        .map(q => q.aiEvaluation.score);
+      
       interview.overallScore = scores.length > 0
         ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
         : 0;
     }
-
+ 
     interview.liveTranscript = transcript;
   }
-
+ 
   interview.status = 'completed';
   interview.completedAt = new Date();
-
+ 
   // Generate summary if we have evaluated questions
   if (interview.questions.length > 0 && !interview.summary) {
     try {
@@ -653,6 +670,7 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
           response: q.candidateResponse,
           score: q.aiEvaluation.score,
         }));
+      
       if (questionsData.length > 0) {
         interview.summary = await generateInterviewSummary(questionsData, {
           interviewType: interview.interviewType,
@@ -661,11 +679,13 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
         });
       }
     } catch (err) {
+      console.error('Failed to generate summary:', err.message);
       interview.summary = `Interview completed. Score: ${interview.overallScore || 0}%.`;
     }
   }
-
+ 
+  // ✅ NOW save after ALL evaluations and summary are done
   await interview.save();
-
+ 
   res.json(new ApiResponse(200, interview, 'Live interview completed'));
 });
