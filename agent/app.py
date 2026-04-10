@@ -1,4 +1,4 @@
-# IntervuAI LiveKit Agent - FIXED VERSION
+# IntervuAI LiveKit Agent
 # Real-time AI interviewer using LiveKit, Cerebras, and Deepgram
 
 import os
@@ -6,7 +6,7 @@ import sys
 import json
 import asyncio
 import aiohttp
-from livekit import agents, rtc
+from livekit import agents
 from livekit.agents import Agent, AgentSession, JobContext, WorkerOptions
 from livekit.plugins import openai, silero, deepgram
 from dotenv import load_dotenv
@@ -28,7 +28,7 @@ def check_environment_vars():
         sys.exit(1)
     print("All required API keys loaded.")
 
-# [QUESTION_BANKS and INTERVIEWER_PERSONAS remain exactly the same - keeping them for brevity]
+# Question banks by interview type and difficulty
 QUESTION_BANKS = {
     "frontend": {
         "beginner": [
@@ -428,6 +428,13 @@ QUESTION_BANKS = {
     }
 }
 
+def get_questions_for_interview(interview_type, difficulty_level):
+    """Get the question bank for the given type and level."""
+    type_questions = QUESTION_BANKS.get(interview_type, QUESTION_BANKS["fullstack"])
+    return type_questions.get(difficulty_level, type_questions["intermediate"])
+
+
+# Field-specific interviewer personas and focus areas
 INTERVIEWER_PERSONAS = {
     "frontend": {
         "persona": "a Senior Frontend Architect who has built large-scale web applications at companies like Stripe and Vercel",
@@ -484,12 +491,6 @@ INTERVIEWER_PERSONAS = {
         "red_flags": "Watch for candidates who focus purely on algorithms without understanding the business context, or who can't explain their statistical methodology rigorously.",
     },
 }
-
-
-def get_questions_for_interview(interview_type, difficulty_level):
-    """Get the question bank for the given type and level."""
-    type_questions = QUESTION_BANKS.get(interview_type, QUESTION_BANKS["fullstack"])
-    return type_questions.get(difficulty_level, type_questions["intermediate"])
 
 
 class InterviewerAgent(Agent):
@@ -581,7 +582,6 @@ RED FLAGS TO PROBE:
 TECHNICAL QUESTION BANK (Use as inspiration, not a script — adapt based on the conversation):
 {questions_text}
 {resume_section}{jd_section}{combined_context}
-
 INTERVIEW FLOW & RULES:
 1. OPENING (Question 1): Warm greeting. Introduce yourself briefly with your role. Ask {user_name} to tell you about themselves — what they've been working on recently and what excites them technically.
 2. EXPERIENCE DEEP-DIVE (Questions 2-3): Based on what they share, dig into THEIR specific experience. Ask about a project they mentioned. What was the hardest part? What would they do differently? This must feel personalized, not scripted.
@@ -620,7 +620,7 @@ CONCLUSION:
 async def save_interview_results(interview_id, transcript_data, backend_url, api_key):
     """Post interview results back to the Node.js backend."""
     if not interview_id or not backend_url:
-        print("❌ No interview ID or backend URL, skipping save.")
+        print("No interview ID or backend URL, skipping save.")
         return
 
     url = f"{backend_url}/api/interview/{interview_id}/save-live-results"
@@ -629,23 +629,16 @@ async def save_interview_results(interview_id, transcript_data, backend_url, api
         "x-agent-api-key": api_key or "",
     }
 
-    print(f"📤 Sending transcript to backend: {url}")
-    print(f"📊 Transcript entries: {len(transcript_data.get('transcript', []))}")
-
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=transcript_data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as resp:
+            async with session.post(url, json=transcript_data, headers=headers) as resp:
                 if resp.status == 200:
-                    result = await resp.json()
-                    print(f"✅ Interview results saved for {interview_id}")
-                    print(f"✅ Backend response: {result}")
+                    print(f"Interview results saved for {interview_id}")
                 else:
                     text = await resp.text()
-                    print(f"❌ Failed to save results: {resp.status} - {text}")
-    except asyncio.TimeoutError:
-        print(f"❌ Timeout saving interview results (backend took >120s)")
+                    print(f"Failed to save results: {resp.status} - {text}")
     except Exception as e:
-        print(f"❌ Error saving interview results: {e}")
+        print(f"Error saving interview results: {e}")
 
 
 async def entrypoint(ctx: JobContext):
@@ -707,59 +700,38 @@ async def entrypoint(ctx: JobContext):
 
     session = AgentSession()
 
-    # 🔥 CRITICAL FIX: Collect transcript properly using AgentTranscriptionCollector
+    # Collect transcript for saving
     transcript_entries = []
 
-    # ✅ FIX #1: Capture agent speech properly
     @session.on("agent_speech_committed")
-    def on_agent_speech(msg: agents.llm.LLMMessage):
-        """Capture what the AI interviewer says"""
-        text = msg.content if hasattr(msg, 'content') else str(msg)
-        print(f"🤖 Agent said: {text[:100]}...")
+    def on_agent_speech(msg):
         transcript_entries.append({
-            "role": "agent",  # Changed from "interviewer" to match your backend
-            "text": text,
+            "role": "interviewer",
+            "text": msg.content if hasattr(msg, 'content') else str(msg),
             "timestamp": asyncio.get_event_loop().time(),
         })
 
-    # ✅ FIX #2: Capture user speech properly
     @session.on("user_speech_committed")
-    def on_user_speech(msg: agents.llm.LLMMessage):
-        """Capture what the candidate says"""
-        text = msg.content if hasattr(msg, 'content') else str(msg)
-        print(f"👤 User said: {text[:100]}...")
+    def on_user_speech(msg):
         transcript_entries.append({
-            "role": "user",  # Changed from "candidate" to match your backend
-            "text": text,
+            "role": "candidate",
+            "text": msg.content if hasattr(msg, 'content') else str(msg),
             "timestamp": asyncio.get_event_loop().time(),
         })
 
     await session.start(room=room, agent=agent)
 
-    # 🔥 CRITICAL FIX #3: Don't wait 20 minutes! Wait for disconnect event
-    print("⏳ Waiting for participant to disconnect...")
-    
-    disconnect_event = asyncio.Event()
-    
-    @room.on("participant_disconnected")
-    def on_participant_disconnected(participant: rtc.RemoteParticipant):
-        """Immediately save when user disconnects"""
-        print(f"👋 Participant disconnected: {participant.identity}")
-        disconnect_event.set()
-    
+    # Wait for participant to disconnect or timeout (20 min max)
     try:
-        # Wait for disconnect OR 30 minute timeout (whichever comes first)
-        await asyncio.wait_for(disconnect_event.wait(), timeout=1800)
-        print("✅ Participant disconnected, saving results...")
-    except asyncio.TimeoutError:
-        print("⏰ Interview timed out after 30 minutes")
+        await asyncio.sleep(1200)  # 20 min max
+    except asyncio.CancelledError:
+        pass
 
-    # 🔥 CRITICAL FIX #4: Save results IMMEDIATELY after disconnect
+    # Save results when session ends
     backend_url = os.environ.get("BACKEND_URL", "http://localhost:3000")
     agent_api_key = os.environ.get("AGENT_API_KEY", "")
 
     if interview_id and transcript_entries:
-        print(f"💾 Saving {len(transcript_entries)} transcript entries...")
         await save_interview_results(
             interview_id,
             {
@@ -770,8 +742,6 @@ async def entrypoint(ctx: JobContext):
             backend_url,
             agent_api_key,
         )
-    else:
-        print(f"⚠️ No transcript to save (ID: {interview_id}, Entries: {len(transcript_entries)})")
 
 
 if __name__ == "__main__":
