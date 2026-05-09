@@ -282,7 +282,7 @@ export function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => setCoachMode((prev) => !prev)}
-                      className={`relative h-7 w-12 shrink-0 self-start rounded-full transition-colors ${
+                      className={`relative h-7 w-12 shrink-0 self-start overflow-hidden rounded-full transition-colors ${
                         coachMode
                           ? 'bg-emerald-500'
                           : 'bg-gray-300 dark:bg-gray-600'
@@ -291,8 +291,8 @@ export function DashboardPage() {
                       aria-label="Toggle coach mode"
                     >
                       <span
-                        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
-                          coachMode ? 'translate-x-6' : 'translate-x-1'
+                        className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                          coachMode ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
                     </button>
