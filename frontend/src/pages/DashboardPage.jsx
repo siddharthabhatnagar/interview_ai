@@ -10,7 +10,7 @@ import { formatDate } from '../utils/formatters';
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { currentUser, getMe } = useAuthStore();
+  const { currentUser } = useAuthStore();
   const { interviewHistory, totalInterviewCount, getHistory, loading } = useInterviewStore();
   const [selectedType, setSelectedType] = useState('frontend');
   const [selectedLevel, setSelectedLevel] = useState('beginner');
@@ -19,6 +19,7 @@ export function DashboardPage() {
   const [isStarting, setIsStarting] = useState(false);
   const [resumeText, setResumeText] = useState('');
   const [jobDescription, setJobDescription] = useState('');
+  const [coachMode, setCoachMode] = useState(false);
   const [showResume, setShowResume] = useState(false);
   const [showJD, setShowJD] = useState(false);
 
@@ -32,9 +33,8 @@ export function DashboardPage() {
       return;
     }
 
-    getMe();
     getHistory();
-  }, []);
+  }, [currentUser]);
 
   const handleStartInterview = async () => {
     if ((currentUser?.credits || 0) < totalCredits) {
@@ -46,7 +46,7 @@ export function DashboardPage() {
     try {
       const response = await useInterviewStore.getState().startLiveInterview(
         selectedType, selectedLevel, selectedDuration, selectedAnalysis,
-        resumeText.trim(), jobDescription.trim()
+        resumeText.trim(), jobDescription.trim(), coachMode
       );
       navigate(`/live-interview/${response.interviewId}`, {
         state: {
@@ -62,7 +62,7 @@ export function DashboardPage() {
     }
   };
 
-  if (loading || !currentUser) {
+  if (!currentUser) {
     return <Loading />;
   }
 
@@ -271,6 +271,34 @@ export function DashboardPage() {
                 </div>
 
                 {/* Credit Cost Summary */}
+                <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-emerald-900 dark:text-emerald-300">Coach Mode</p>
+                      <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
+                        Practice mode adds short real-time tips after each answer before the next question.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCoachMode((prev) => !prev)}
+                      className={`relative h-7 w-12 rounded-full transition-colors ${
+                        coachMode
+                          ? 'bg-emerald-500'
+                          : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                      aria-pressed={coachMode}
+                      aria-label="Toggle coach mode"
+                    >
+                      <span
+                        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                          coachMode ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
                 <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 flex justify-between items-center">
                   <span className="text-blue-900 dark:text-blue-200 font-medium">Total cost for this interview</span>
                   <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalCredits} credit{totalCredits !== 1 ? 's' : ''}</span>

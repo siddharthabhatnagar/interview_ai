@@ -23,8 +23,8 @@ function PrivateRoute({ children }) {
     return <Navigate to="/login" />;
   }
 
-  // If still loading user data, don't redirect yet
-  if (loading) {
+  // Only block routing while bootstrapping the user from token.
+  if (loading && !currentUser) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -53,9 +53,11 @@ function App() {
 
   useEffect(() => {
     if (token && !currentUser) {
-      getMe();
+      getMe().catch(() => {
+        // Errors are handled in the auth store/interceptors.
+      });
     }
-  }, [token]);
+  }, [token, currentUser, getMe]);
 
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
