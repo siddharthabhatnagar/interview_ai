@@ -396,7 +396,7 @@ export function PricingPage() {
                 },
                 {
                   q: 'Do you offer team or enterprise pricing?',
-                  a: 'Yes! For teams and organizations, contact our sales team at support@intervuai.com for custom pricing.',
+                  a: 'Yes! For teams and organizations, contact our sales team at buildifydevelopers@gmail.com for custom pricing.',
                 },
               ].map((faq, idx) => (
                 <div key={idx}>

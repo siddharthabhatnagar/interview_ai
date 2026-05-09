@@ -183,7 +183,7 @@ export function TermsOfServicePage() {
             </p>
             <div className="mt-3 bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-sm">
               <p className="font-semibold text-gray-900 dark:text-white">IntervuAI</p>
-              <p>Email: <span className="text-blue-600 dark:text-blue-400">support@intervuai.com</span></p>
+              <p>Email: <span className="text-blue-600 dark:text-blue-400">buildifydevelopers@gmail.com</span></p>
             </div>
           </section>
         </div>

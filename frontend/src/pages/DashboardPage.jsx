@@ -272,8 +272,8 @@ export function DashboardPage() {
 
                 {/* Credit Cost Summary */}
                 <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold text-emerald-900 dark:text-emerald-300">Coach Mode</p>
                       <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
                         Practice mode adds short real-time tips after each answer before the next question.
@@ -282,7 +282,7 @@ export function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => setCoachMode((prev) => !prev)}
-                      className={`relative h-7 w-12 rounded-full transition-colors ${
+                      className={`relative h-7 w-12 shrink-0 self-start rounded-full transition-colors ${
                         coachMode
                           ? 'bg-emerald-500'
                           : 'bg-gray-300 dark:bg-gray-600'
