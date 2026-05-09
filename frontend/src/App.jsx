@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { useAuthStore } from './store/authStore';
 import { LandingPage } from './pages/LandingPage';
@@ -17,6 +17,7 @@ import { DocsPage } from './pages/DocsPage';
 
 function PrivateRoute({ children }) {
   const { token, currentUser, loading } = useAuthStore();
+  const location = useLocation();
 
   if (!token) {
     return <Navigate to="/login" />;
@@ -35,8 +36,13 @@ function PrivateRoute({ children }) {
   }
 
   // If user hasn't accepted terms, redirect to terms acceptance page
-  if (currentUser && !currentUser.termsAccepted) {
+  if (currentUser && !currentUser.termsAccepted && location.pathname !== '/accept-terms') {
     return <Navigate to="/accept-terms" />;
+  }
+
+  // If terms are already accepted, don't allow going back to terms page
+  if (currentUser && currentUser.termsAccepted && location.pathname === '/accept-terms') {
+    return <Navigate to="/dashboard" />;
   }
 
   return children;

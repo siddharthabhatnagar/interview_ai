@@ -72,12 +72,13 @@ export const useAuthStore = create((set) => ({
   },
 
   getMe: async () => {
+    set({ loading: true, error: null });
     try {
       const response = await apiClient.get('/auth/me');
-      set({ currentUser: response.data.data });
+      set({ currentUser: response.data.data, loading: false });
       return response.data.data;
     } catch (error) {
-      set({ error: error.response?.data?.message || 'Failed to fetch user' });
+      set({ error: error.response?.data?.message || 'Failed to fetch user', loading: false });
       throw error;
     }
   },
