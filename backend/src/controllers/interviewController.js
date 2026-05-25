@@ -6,6 +6,7 @@ import {
   generateInitialQuestion,
   evaluateResponse,
   generateInterviewSummary,
+  generateImprovementRoadmap,
   isResponseCompleteEnough,
 } from '../services/gptService.js';
 import {
@@ -314,7 +315,7 @@ export default {
  * @body {interviewType, difficultyLevel}
  */
 export const startLiveInterview = asyncHandler(async (req, res) => {
-  const { interviewType = 'fullstack', difficultyLevel = 'intermediate', duration = 'standard', analysisType = 'basic', resumeText = '', jobDescription = '' } = req.body;
+  const { interviewType = 'fullstack', difficultyLevel = 'intermediate', duration = 'standard', analysisType = 'basic', resumeText = '', jobDescription = '', coachMode = false } = req.body;
   const userId = req.user.userId;
 
   // Calculate credit cost
@@ -346,6 +347,7 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
     status: 'in_progress',
     startedAt: new Date(),
     isLiveInterview: true,
+    coachMode: !!coachMode,
   });
 
   // Deduct credits
@@ -367,6 +369,7 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
   // Add optional resume/JD to metadata (truncate to prevent oversized tokens)
   if (resumeText) roomMetadata.resumeText = resumeText.slice(0, 5000);
   if (jobDescription) roomMetadata.jobDescription = jobDescription.slice(0, 5000);
+  if (coachMode) roomMetadata.coachMode = true;
 
   const token = await generateToken(
     roomName,
@@ -560,7 +563,7 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
     return res.json(new ApiResponse(200, interview, 'Interview already completed'));
   }
 
-  const { transcript } = req.body;
+  const { transcript, focusData, speechData } = req.body;
 
   if (transcript && Array.isArray(transcript) && transcript.length > 0) {
     // Parse transcript into questions
@@ -660,6 +663,34 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
   interview.status = 'completed';
   interview.completedAt = new Date();
 
+  // Store focus analysis data (from MediaPipe face tracking on frontend)
+  if (focusData && typeof focusData === 'object' && focusData.averageFocusScore !== undefined) {
+    interview.focusAnalysis = {
+      averageFocusScore: focusData.averageFocusScore,
+      totalDataPoints: focusData.totalDataPoints || 0,
+      faceNotDetectedPercent: focusData.faceNotDetectedPercent || 0,
+      lookAwayPercent: focusData.lookAwayPercent || 0,
+      attentionDrops: focusData.attentionDrops || 0,
+      focusTimeline: (focusData.focusTimeline || []).slice(0, 120),
+    };
+  }
+
+  // Store speech analytics data (from frontend transcript analysis)
+  if (speechData && typeof speechData === 'object' && speechData.totalWords !== undefined) {
+    interview.speechAnalytics = {
+      totalWords: speechData.totalWords,
+      totalFillers: speechData.totalFillers || 0,
+      fillerRate: speechData.fillerRate || 0,
+      topFillers: (speechData.topFillers || []).slice(0, 5),
+      wordsPerMinute: speechData.wordsPerMinute || null,
+      silenceGaps: speechData.silenceGaps || 0,
+      longPauses: speechData.longPauses || 0,
+      avgSilenceSec: speechData.avgSilenceSec || 0,
+      vocabularyRichness: speechData.vocabularyRichness || 0,
+      communicationScore: speechData.communicationScore || 0,
+    };
+  }
+
   // Generate summary if we have evaluated questions
   if (interview.questions.length > 0 && !interview.summary) {
     try {
@@ -683,8 +714,35 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
       interview.summary = `Interview completed. Score: ${interview.overallScore || 0}%.`;
     }
   }
+  // Generate improvement roadmap
+  if (interview.questions.length > 0) {
+    try {
+      const questionsData = interview.questions
+        .filter(q => q.aiEvaluation)
+        .map(q => ({
+          question: q.questionText,
+          response: q.candidateResponse,
+          score: q.aiEvaluation.score,
+        }));
+      if (questionsData.length > 0) {
+        const roadmap = await generateImprovementRoadmap(questionsData, {
+          interviewType: interview.interviewType,
+          difficultyLevel: interview.difficultyLevel,
+          speechAnalytics: interview.speechAnalytics || null,
+          focusAnalysis: interview.focusAnalysis || null,
+        });
+        interview.improvementRoadmap = {
+          generatedAt: new Date(),
+          weeklyPlan: roadmap.weeklyPlan,
+          topWeaknesses: roadmap.topWeaknesses || [],
+          resources: roadmap.resources || [],
+        };
+      }
+    } catch (err) {
+      console.error('Roadmap generation failed:', err.message);
+    }
+  }
 
-  // ✅ NOW save after ALL evaluations and summary are done
   await interview.save();
 
   res.json(new ApiResponse(200, interview, 'Live interview completed'));

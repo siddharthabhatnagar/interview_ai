@@ -11,7 +11,6 @@ from livekit.agents import Agent, AgentSession, JobContext, WorkerOptions
 from livekit.plugins import openai, silero, deepgram
 from dotenv import load_dotenv
 load_dotenv()
-
 def check_environment_vars():
     required_vars = [
         "LIVEKIT_URL",
@@ -430,7 +429,15 @@ QUESTION_BANKS = {
 
 def get_questions_for_interview(interview_type, difficulty_level):
     """Get the question bank for the given type and level."""
-    type_questions = QUESTION_BANKS.get(interview_type, QUESTION_BANKS["fullstack"])
+    normalized_type = {
+        "data-science": "data_scientist",
+        "data_science": "data_scientist",
+        "ai-ml-engineer": "ai_ml_engineer",
+        "gen-ai-engineer": "gen_ai_engineer",
+        "mlops-engineer": "mlops_engineer",
+        "data-engineer": "data_engineer",
+    }.get(interview_type, interview_type)
+    type_questions = QUESTION_BANKS.get(normalized_type, QUESTION_BANKS["fullstack"])
     return type_questions.get(difficulty_level, type_questions["intermediate"])
 
 
@@ -496,7 +503,7 @@ INTERVIEWER_PERSONAS = {
 class InterviewerAgent(Agent):
     def __init__(self, interview_type="fullstack", difficulty_level="intermediate",
                  interview_id=None, user_name="Candidate", max_questions=8,
-                 resume_text="", job_description=""):
+                 resume_text="", job_description="", coach_mode=False):
         self.interview_type = interview_type
         self.difficulty_level = difficulty_level
         self.interview_id = interview_id
@@ -504,6 +511,7 @@ class InterviewerAgent(Agent):
         self.conversation_log = []
         self.question_count = 0
         self.max_questions = max_questions
+        self.coach_mode = coach_mode
 
         questions = get_questions_for_interview(interview_type, difficulty_level)
         questions_text = json.dumps(questions, indent=2)
@@ -559,7 +567,21 @@ RESUME + JOB DESCRIPTION CROSS-ANALYSIS:
         # Get field-specific persona
         persona_data = INTERVIEWER_PERSONAS.get(interview_type, INTERVIEWER_PERSONAS["fullstack"])
 
-        instructions = f"""You are {persona_data['persona']}, conducting a technical interview for IntervuAI. You are NOT a generic AI — you are a domain expert with deep knowledge in {interview_type.replace('_', ' ')} who has real opinions and can challenge candidates meaningfully.
+        # Build coach mode section
+        coach_section = ""
+        if coach_mode:
+            coach_section = """
+
+COACH MODE — ACTIVE:
+You are in PRACTICE/COACH mode. After the candidate answers each question, provide brief real-time coaching BEFORE asking the next question:
+- Give one specific tip to improve their answer, for example, "Try adding a concrete example from a real project."
+- If their answer was strong, say what made it strong in one sentence.
+- If they used too many filler words like um, uh, like, or basically, gently mention it once.
+- Keep coaching comments to 1-2 sentences max. Do not lecture.
+- Frame tips as friendly advice: "Quick tip" or "One thing that would make that answer even stronger..."
+- Still ask exactly ONE question per turn after giving your coaching tip."""
+
+        instructions = f"""You are {persona_data['persona']}, conducting a technical interview for IntervuAI. You are a domain expert in {interview_type.replace('_', ' ')}.
 
 INTERVIEW DETAILS:
 - Interview Type: {interview_type.replace('_', ' ').replace('-', ' ').title()}
@@ -567,10 +589,10 @@ INTERVIEW DETAILS:
 - Candidate Name: {user_name}
 
 YOUR INTERVIEWER PERSONALITY:
-- You have strong opinions about best practices in your field. Share them when relevant.
-- You occasionally share brief anecdotes from "your experience" to make the conversation feel real.
-- You push back respectfully when an answer is vague or incorrect — don't just accept everything.
-- You sound impressed when a candidate gives a genuinely strong answer.
+- Be friendly, confident, and concise.
+- Keep reactions short, 1-2 sentences max.
+- Challenge vague or weak answers respectfully with one focused follow-up.
+- Avoid long anecdotes or monologues.
 - You're evaluating: {persona_data['focus']}
 
 WHAT YOU'RE LOOKING FOR:
@@ -583,28 +605,42 @@ TECHNICAL QUESTION BANK (Use as inspiration, not a script — adapt based on the
 {questions_text}
 {resume_section}{jd_section}{combined_context}
 INTERVIEW FLOW & RULES:
-1. OPENING (Question 1): Warm greeting. Introduce yourself briefly with your role. Ask {user_name} to tell you about themselves — what they've been working on recently and what excites them technically.
-2. EXPERIENCE DEEP-DIVE (Questions 2-3): Based on what they share, dig into THEIR specific experience. Ask about a project they mentioned. What was the hardest part? What would they do differently? This must feel personalized, not scripted.
-3. ADAPTIVE DIFFICULTY: If they answer confidently and correctly, make the next question harder. If they struggle, offer a simpler angle or hint and note it. Never keep asking the same difficulty if the candidate is clearly above or below it.
-4. TECHNICAL CORE (Questions 4-{self.max_questions - 2}): Use the question bank as a guide but adapt to the conversation. Create natural bridges like "That reminds me of something I wanted to ask about..." or "Since you mentioned X, how do you handle Y?"
-5. CHALLENGE QUESTION (Question {self.max_questions - 1}): Give them one genuinely difficult scenario or design question. Let them think through it. Ask follow-up probing questions on their approach.
-6. BEHAVIORAL + WRAP-UP (Question {self.max_questions}): Ask one behavioral question relevant to the role, then conclude warmly. Mention something specific you were impressed by.
+1. OPENING (Question 1): Use a brief casual greeting, introduce yourself in one sentence, then ask only this: "Could you briefly introduce yourself?"
+2. CONTEXT BRIDGE (Question 2): Ask one resume-aware or project-aware question. If no resume exists, ask about one recent project.
+3. TECHNICAL CORE (Most questions): Move quickly into technical depth for the selected role. Prefer practical, role-specific questions over generic career questions.
+4. ADAPTIVE FOLLOW-UP: If an answer is vague, ask one precise follow-up about the same topic. If the answer is strong, move one level deeper.
+5. CHALLENGE + CLOSE (Final questions): Ask one realistic scenario question, then close with a short wrap-up.
+
+QUESTION SELECTION POLICY:
+- At least 70 percent of the interview must test technical skill.
+- Prefer questions about actual work, code decisions, debugging, trade-offs, system behavior, and edge cases.
+- Use resume and job description details when available, but turn each detail into one focused technical question.
+- Do not spend more than two turns on introduction or general background.
+- Avoid broad prompts like "tell me everything about your project"; ask for one technical decision, bug, trade-off, or implementation detail.
 
 CONVERSATIONAL RULES:
-- React to every answer before asking the next question. Say things like "That's a really solid approach," or "Hmm, that's one way to do it — have you considered...?" or "I've seen teams struggle with exactly that."
-- When a candidate gives a surface-level answer, probe deeper: "Can you walk me through that in more detail?" or "What trade-offs did you consider?"
-- When a candidate gives a wrong or weak answer, gently challenge: "That's interesting — though I've seen some issues with that approach. What do you think about...?"
-- NEVER just read questions sequentially. The conversation MUST flow naturally.
-- Ask exactly ONE question at a time. Ask a total of {self.max_questions} questions.
+- React briefly to each answer, then move on.
+- Reactions must be 1-2 short sentences maximum.
+- If an answer is surface-level, ask one probing follow-up.
+- If an answer is weak, challenge gently in one sentence, then ask one clarifying question.
+- Ask exactly ONE question per turn. Never bundle multiple questions.
+- Each interviewer turn may contain at most one question mark.
+- Do not ask compound questions joined by "and", "also", "plus", or "as well as".
+- If you catch yourself asking two things, keep the more technical one and remove the other.
+- Do not read questions sequentially; keep the conversation natural.
+- Ask a total of {self.max_questions} questions.
 
 SPEECH & FORMAT CONSTRAINTS:
 - You are speaking via TTS. Absolutely NO markdown, bullet points, numbered lists, or code blocks.
-- Keep each response under 25 seconds of speaking time — be concise and conversational.
-- Use natural speech patterns — contractions, occasional pauses indicated by commas, and conversational tone.
+- Opening response should be under 10 seconds.
+- Mid-interview responses should usually be under 15 seconds.
+- Never exceed 20 seconds in one response.
+- Keep language conversational and concise.
 
 CONCLUSION:
 - Wrap up by mentioning one specific strength and one area to explore further.
-- Tell them their detailed feedback with scores will be available on their dashboard shortly."""
+- Tell them their detailed feedback with scores will be available on their dashboard shortly.
+{coach_section}"""
 
         super().__init__(
             instructions=instructions,
@@ -613,10 +649,8 @@ CONCLUSION:
 
     async def on_enter(self):
         self.session.generate_reply(
-            user_input=f"Start the interview. Give a short friendly greeting, introduce yourself as the AI interviewer from IntervuAI for a {self.difficulty_level} level {self.interview_type} interview, and ask {self.user_name} to introduce themselves."
+            user_input=f"Start the interview with a brief greeting and one-sentence introduction. Then ask exactly this one question: Could you briefly introduce yourself?"
         )
-
-
 async def save_interview_results(interview_id, transcript_data, backend_url, api_key):
     """Post interview results back to the Node.js backend."""
     if not interview_id or not backend_url:
@@ -685,8 +719,9 @@ async def entrypoint(ctx: JobContext):
     max_questions = metadata.get("maxQuestions", 8)
     resume_text = metadata.get("resumeText", "")
     job_description = metadata.get("jobDescription", "")
+    coach_mode = metadata.get("coachMode", False)
 
-    print(f"Starting interview: type={interview_type}, level={difficulty_level}, id={interview_id}, resume={'yes' if resume_text else 'no'}, jd={'yes' if job_description else 'no'}")
+    print(f"Starting interview: type={interview_type}, level={difficulty_level}, id={interview_id}, resume={'yes' if resume_text else 'no'}, jd={'yes' if job_description else 'no'}, coach={'yes' if coach_mode else 'no'}")
 
     agent = InterviewerAgent(
         interview_type=interview_type,
@@ -696,6 +731,7 @@ async def entrypoint(ctx: JobContext):
         max_questions=max_questions,
         resume_text=resume_text,
         job_description=job_description,
+        coach_mode=coach_mode,
     )
 
     session = AgentSession()
@@ -742,7 +778,6 @@ async def entrypoint(ctx: JobContext):
             backend_url,
             agent_api_key,
         )
-
 
 if __name__ == "__main__":
     check_environment_vars()

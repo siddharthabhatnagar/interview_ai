@@ -397,6 +397,196 @@ export function ResultsPage() {
           <SummaryRenderer summary={currentInterview.summary} isPremium={isPremium} isDetailed={isDetailed} />
         </Card>
 
+        {/* Focus & Engagement Analysis */}
+        {currentInterview.focusAnalysis && currentInterview.focusAnalysis.averageFocusScore !== undefined && (
+          <Card className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <span className="text-lg">👁️</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Focus & Engagement</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">AI-powered face tracking during the interview</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className={`text-3xl font-bold ${currentInterview.focusAnalysis.averageFocusScore >= 70 ? 'text-green-600 dark:text-green-400' : currentInterview.focusAnalysis.averageFocusScore >= 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {currentInterview.focusAnalysis.averageFocusScore}%
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg Focus Score</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {currentInterview.focusAnalysis.attentionDrops || 0}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Attention Drops</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {100 - (currentInterview.focusAnalysis.lookAwayPercent || 0)}%
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Eye Contact</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {100 - (currentInterview.focusAnalysis.faceNotDetectedPercent || 0)}%
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">On Camera</div>
+              </div>
+            </div>
+
+            {/* Focus Timeline */}
+            {currentInterview.focusAnalysis.focusTimeline && currentInterview.focusAnalysis.focusTimeline.length > 1 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Focus Over Time</h4>
+                <div className="h-20 flex items-end gap-px bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                  {currentInterview.focusAnalysis.focusTimeline.map((point, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-t transition-all"
+                      style={{
+                        height: `${Math.max(2, point.s)}%`,
+                        backgroundColor: point.s >= 70 ? '#22c55e' : point.s >= 40 ? '#eab308' : '#ef4444',
+                        opacity: 0.8,
+                      }}
+                      title={`Focus: ${point.s}%`}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-1 px-2">
+                  <span>Start</span>
+                  <span>End</span>
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Speech Analytics */}
+        {currentInterview.speechAnalytics && currentInterview.speechAnalytics.totalWords > 0 && (
+          <Card className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                <span className="text-lg">🎙️</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Speech Analytics</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Communication patterns and verbal analysis</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {currentInterview.speechAnalytics.wordsPerMinute && (
+                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                  <div className={`text-3xl font-bold ${currentInterview.speechAnalytics.wordsPerMinute >= 120 && currentInterview.speechAnalytics.wordsPerMinute <= 160 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                    {currentInterview.speechAnalytics.wordsPerMinute}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Words/Min</div>
+                </div>
+              )}
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className={`text-3xl font-bold ${currentInterview.speechAnalytics.totalFillers <= 5 ? 'text-green-600 dark:text-green-400' : currentInterview.speechAnalytics.totalFillers <= 15 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {currentInterview.speechAnalytics.totalFillers}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Filler Words</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {currentInterview.speechAnalytics.longPauses || 0}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Long Pauses</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className={`text-3xl font-bold ${currentInterview.speechAnalytics.communicationScore >= 70 ? 'text-green-600 dark:text-green-400' : currentInterview.speechAnalytics.communicationScore >= 50 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {currentInterview.speechAnalytics.communicationScore}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Comm. Score</div>
+              </div>
+            </div>
+
+            {/* Top filler words */}
+            {currentInterview.speechAnalytics.topFillers && currentInterview.speechAnalytics.topFillers.length > 0 && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Most Used Filler Words</h4>
+                <div className="flex flex-wrap gap-2">
+                  {currentInterview.speechAnalytics.topFillers.map((f, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 text-sm font-medium px-3 py-1.5 rounded-full">
+                      "{f.word}" <span className="text-xs opacity-70">×{f.count}</span>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                  <div className="text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Vocabulary Richness:</span> {currentInterview.speechAnalytics.vocabularyRichness}%
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Filler Rate:</span> {currentInterview.speechAnalytics.fillerRate} per 100 words
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Improvement Roadmap */}
+        {currentInterview.improvementRoadmap && currentInterview.improvementRoadmap.weeklyPlan && (
+          <Card className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
+                <span className="text-lg">🗺️</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Your Improvement Roadmap</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Personalized 2-week plan based on your performance</p>
+              </div>
+            </div>
+
+            {/* Weaknesses to target */}
+            {currentInterview.improvementRoadmap.topWeaknesses && currentInterview.improvementRoadmap.topWeaknesses.length > 0 && (
+              <div className="mb-5">
+                <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Key Areas to Improve</h4>
+                <div className="flex flex-wrap gap-2">
+                  {currentInterview.improvementRoadmap.topWeaknesses.map((w, i) => (
+                    <span key={i} className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs font-medium px-2.5 py-1 rounded-full">
+                      {w}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Weekly plan */}
+            <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-5 border border-teal-200 dark:border-teal-800 mb-5">
+              <h4 className="text-sm font-bold text-teal-800 dark:text-teal-300 mb-3 uppercase tracking-wide">📅 2-Week Study Plan</h4>
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                {currentInterview.improvementRoadmap.weeklyPlan}
+              </p>
+            </div>
+
+            {/* Recommended resources */}
+            {currentInterview.improvementRoadmap.resources && currentInterview.improvementRoadmap.resources.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">📚 Recommended Resources</h4>
+                <div className="space-y-2">
+                  {currentInterview.improvementRoadmap.resources.map((r, i) => (
+                    <div key={i} className="flex items-start gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${r.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : r.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                        {r.priority}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{r.topic}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{r.resource}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
+
         {/* Questions & Answers */}
         <Card className="mb-8">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Question-by-Question Breakdown</h3>

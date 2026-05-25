@@ -19,6 +19,19 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+function maskConnectionString(value) {
+  if (!value) return 'not configured';
+
+  try {
+    const url = new URL(value);
+    if (url.username) url.username = '***';
+    if (url.password) url.password = '***';
+    return url.toString();
+  } catch {
+    return 'configured';
+  }
+}
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: env.isProduction ? undefined : false,
@@ -107,7 +120,7 @@ const startServer = async () => {
       console.log(`${'='.repeat(60)}`);
       console.log(`✓ Server running on http://localhost:${env.PORT}`);
       console.log(`✓ Environment: ${env.NODE_ENV}`);
-      console.log(`✓ Database: ${env.MONGODB_URI}`);
+      console.log(`✓ Database: ${maskConnectionString(env.MONGODB_URI)}`);
       console.log(`✓ Frontend URL: ${env.FRONTEND_URL}`);
       console.log(`${'='.repeat(60)}\n`);
 

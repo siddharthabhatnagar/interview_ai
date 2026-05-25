@@ -116,6 +116,60 @@ const interviewSchema = new mongoose.Schema(
         timestamp: Number,
       },
     ],
+
+    // Focus & engagement analysis (from MediaPipe face tracking)
+    focusAnalysis: {
+      averageFocusScore: Number,
+      totalDataPoints: Number,
+      faceNotDetectedPercent: Number,
+      lookAwayPercent: Number,
+      attentionDrops: Number,
+      focusTimeline: [
+        {
+          t: Number,
+          s: Number,
+        },
+      ],
+    },
+
+    // Speech analytics (filler words, pace, silence)
+    speechAnalytics: {
+      totalWords: Number,
+      totalFillers: Number,
+      fillerRate: Number,
+      topFillers: [
+        {
+          word: String,
+          count: Number,
+        },
+      ],
+      wordsPerMinute: Number,
+      silenceGaps: Number,
+      longPauses: Number,
+      avgSilenceSec: Number,
+      vocabularyRichness: Number,
+      communicationScore: Number,
+    },
+
+    // AI-generated improvement roadmap
+    improvementRoadmap: {
+      generatedAt: Date,
+      weeklyPlan: String,
+      topWeaknesses: [String],
+      resources: [
+        {
+          topic: String,
+          resource: String,
+          priority: String,
+        },
+      ],
+    },
+
+    // Coach mode flag
+    coachMode: {
+      type: Boolean,
+      default: false,
+    },
     
     createdAt: {
       type: Date,

@@ -153,27 +153,38 @@ npm run test             # Test all projects
 
 ## 🤖 AI Integration Details
 
-### GPT-4o-mini
-- Used for generating contextual technical questions
-- Evaluates candidate responses
-- Determines follow-up questions
+### Cerebras
+- Realtime interview agent uses `llama3.1-8b`
+- Backend evaluation and summary pipeline uses `gpt-oss-120b`
+- Handles question generation, scoring, summaries, and roadmap generation
 
-### Deepgram Nova-2
-- Converts audio stream to text in real-time
-- Handles technical terminology
-- Provides transcription confidence scores
+### Deepgram
+- Provides real-time speech-to-text and text-to-speech for live interviews
+- Main variable cost driver in the live interview flow
+- Used directly by the self-hosted Python LiveKit agent
 
-### ElevenLabs
-- Converts AI responses to natural-sounding speech
-- Multiple voice options
-- Real-time streaming capability
+### LiveKit
+- Provides realtime room and media transport infrastructure
+- Used for browser-based live interview sessions
+- Works with the self-hosted interview agent rather than LiveKit hosted agents
 
-## 💳 Pricing Models
+## 💳 Current Pricing Model
 
-1. **Free Tier**: 1 interview/month
-2. **Starter ($99/month)**: 20 interviews/month
-3. **Growth ($299/month)**: Unlimited interviews
-4. **Pay-Per-Interview**: ₹500 per interview
+| Plan | Price | Credits | Notes |
+|---|---:|---:|---|
+| Starter | INR 499 | 15 | Good entry plan for light usage |
+| Growth | INR 999 | 35 | Best fit for repeat practice |
+| Pro | INR 1999 | 80 | Highest value for heavy users |
+
+Current credit pricing:
+
+- Quick interview: 1 credit
+- Standard interview: 2 credits
+- Deep interview: 3 credits
+- Detailed analysis add-on: 1 credit
+- Premium analysis add-on: 2 credits
+
+For full vendor pricing, unit economics, and market benchmarking, see [MARKET_COSTING_REPORT.md](./MARKET_COSTING_REPORT.md).
 
 ## 🐛 Troubleshooting
 

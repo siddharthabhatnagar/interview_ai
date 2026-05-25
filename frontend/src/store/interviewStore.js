@@ -26,7 +26,7 @@ export const useInterviewStore = create((set) => ({
     }
   },
 
-  startLiveInterview: async (type, level, duration = 'standard', analysisType = 'basic', resumeText = '', jobDescription = '') => {
+  startLiveInterview: async (type, level, duration = 'standard', analysisType = 'basic', resumeText = '', jobDescription = '', coachMode = false) => {
     set({ loading: true, error: null });
     try {
       const body = {
@@ -37,6 +37,7 @@ export const useInterviewStore = create((set) => ({
       };
       if (resumeText) body.resumeText = resumeText;
       if (jobDescription) body.jobDescription = jobDescription;
+      if (coachMode) body.coachMode = true;
 
       const response = await apiClient.post('/interview/start-live', body);
       set({ currentInterview: response.data.data, loading: false });

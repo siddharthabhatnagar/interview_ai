@@ -6,6 +6,8 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Loading } from '../components/Loading';
 import apiClient from '../services/apiClient';
+import { FocusAnalyzer } from '../utils/focusAnalyzer';
+import { SpeechAnalyzer } from '../utils/speechAnalyzer';
 
 export function LiveInterviewPage() {
   const { interviewId } = useParams();
@@ -32,6 +34,12 @@ export function LiveInterviewPage() {
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const animFrameRef = useRef(null);
+  const focusAnalyzerRef = useRef(null);
+  const speechAnalyzerRef = useRef(null);
+  const localVideoRef = useRef(null);
+
+  // Focus indicator state
+  const [focusScore, setFocusScore] = useState(null);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -131,10 +139,15 @@ export function LiveInterviewPage() {
               // Finalized segment — add to transcript
               const text = segment.text?.trim();
               if (text) {
+                const ts = Date.now();
                 setTranscript((prev) => [
                   ...prev,
-                  { role, text, timestamp: Date.now() },
+                  { role, text, timestamp: ts },
                 ]);
+                // Feed user speech to speech analyzer
+                if (role === 'user' && speechAnalyzerRef.current) {
+                  speechAnalyzerRef.current.addEntry(text, ts);
+                }
               }
               delete pendingSegments[segId];
             } else {
@@ -173,6 +186,35 @@ export function LiveInterviewPage() {
         // Enable microphone
         await room.localParticipant.setMicrophoneEnabled(true);
 
+        // Initialize speech analyzer
+        speechAnalyzerRef.current = new SpeechAnalyzer();
+
+        // Initialize focus analyzer with local camera
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+          const camPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+          if (camPub?.track) {
+            const videoEl = document.createElement('video');
+            videoEl.srcObject = new MediaStream([camPub.track.mediaStreamTrack]);
+            videoEl.setAttribute('playsinline', '');
+            videoEl.muted = true;
+            await videoEl.play();
+            localVideoRef.current = videoEl;
+
+            const fa = new FocusAnalyzer();
+            const ok = await fa.init(videoEl);
+            if (ok) {
+              fa.onScoreUpdate = (score) => {
+                if (!cancelled) setFocusScore(score);
+              };
+              fa.start();
+              focusAnalyzerRef.current = fa;
+            }
+          }
+        } catch (camErr) {
+          console.warn('Camera/FocusAnalyzer init skipped:', camErr.message);
+        }
+
         // Set up audio level monitoring for visualizer
         const localTrack = room.localParticipant.getTrackPublication(Track.Source.Microphone);
         if (localTrack?.track) {
@@ -200,6 +242,15 @@ export function LiveInterviewPage() {
       }
       if (audioContextRef.current) {
         audioContextRef.current.close();
+      }
+      if (focusAnalyzerRef.current) {
+        focusAnalyzerRef.current.destroy();
+        focusAnalyzerRef.current = null;
+      }
+      if (localVideoRef.current) {
+        localVideoRef.current.pause();
+        localVideoRef.current.srcObject = null;
+        localVideoRef.current = null;
       }
       // Clean up agent audio elements
       document.querySelectorAll('#agent-audio').forEach((el) => el.remove());
@@ -245,6 +296,17 @@ export function LiveInterviewPage() {
     if (isEnding) return;
     setIsEnding(true);
 
+    // Gather analytics before disconnecting
+    const focusData = focusAnalyzerRef.current?.getSummary() || null;
+    const speechData = speechAnalyzerRef.current?.getSummary() || null;
+
+    // Stop analyzers
+    if (focusAnalyzerRef.current) focusAnalyzerRef.current.destroy();
+    if (localVideoRef.current) {
+      localVideoRef.current.pause();
+      localVideoRef.current.srcObject = null;
+    }
+
     try {
       // Disconnect from LiveKit room
       if (roomRef.current) {
@@ -252,19 +314,20 @@ export function LiveInterviewPage() {
         roomRef.current = null;
       }
 
-      // Tell backend to complete and evaluate
+      // Tell backend to complete and evaluate (include focus + speech data)
       await apiClient.post(`/interview/${interviewId}/complete-live`, {
         transcript: transcript.map((t) => ({
           role: t.role,
           text: t.text,
           timestamp: t.timestamp,
         })),
+        focusData,
+        speechData,
       });
 
       navigate(`/results/${interviewId}`);
     } catch (error) {
       console.error('Failed to complete interview:', error);
-      // Still navigate to results even if completion fails
       navigate(`/results/${interviewId}`);
     }
   };
@@ -356,6 +419,28 @@ export function LiveInterviewPage() {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-green-400 text-sm">Live</span>
             </div>
+
+            {/* Focus indicator */}
+            {focusScore !== null && (
+              <div className="flex items-center gap-2" title={`Focus: ${focusScore}%`}>
+                <div
+                  className="w-2.5 h-2.5 rounded-full transition-colors duration-300"
+                  style={{
+                    backgroundColor:
+                      focusScore >= 70 ? '#22c55e' : focusScore >= 40 ? '#eab308' : '#ef4444',
+                  }}
+                />
+                <span
+                  className="text-sm font-medium transition-colors duration-300"
+                  style={{
+                    color:
+                      focusScore >= 70 ? '#4ade80' : focusScore >= 40 ? '#facc15' : '#f87171',
+                  }}
+                >
+                  Focus {focusScore}%
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

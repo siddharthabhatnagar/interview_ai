@@ -1,5 +1,6 @@
 // Agent Manager - Auto-starts the Python LiveKit agent as a child process
 import { spawn } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,6 +12,23 @@ let restartCount = 0;
 const MAX_RESTARTS = 5;
 const RESTART_DELAY = 3000; // 3 seconds
 
+function resolveAgentDir() {
+  const candidates = [
+    process.env.AGENT_DIR,
+    path.resolve(process.cwd(), 'agent'),
+    path.resolve(process.cwd(), '..', 'agent'),
+    path.resolve(__dirname, '..', '..', '..', 'agent'),
+    '/app/agent',
+    '/agent',
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(path.join(candidate, 'app.py'))) || null;
+}
+
+function getPythonCommand() {
+  return process.env.PYTHON_BIN || (process.platform === 'win32' ? 'python' : 'python3');
+}
+
 /**
  * Start the Python LiveKit agent worker process
  */
@@ -20,17 +38,23 @@ export function startAgent() {
     return;
   }
 
-  const agentDir = path.resolve(__dirname, '..', '..', '..', 'agent');
+  const agentDir = resolveAgentDir();
+  if (!agentDir) {
+    console.error('Could not find LiveKit agent app.py. Set AGENT_DIR or copy the agent folder into the container.');
+    return;
+  }
+
   const agentScript = path.join(agentDir, 'app.py');
+  const pythonCommand = getPythonCommand();
 
   console.log(`🤖 Starting LiveKit Agent from ${agentDir}...`);
 
   try {
-    agentProcess = spawn('python', [agentScript, 'dev'], {
+    agentProcess = spawn(pythonCommand, [agentScript, 'dev'], {
       cwd: agentDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env },
-      shell: true,
+      shell: false,
     });
 
     agentProcess.stdout.on('data', (data) => {

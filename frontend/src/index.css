@@ -89,3 +89,77 @@ html {
 .dark .bg-blue-50 { background-color: #1e3a5f !important; }
 .dark .text-blue-700 { color: #93c5fd !important; }
 
+/* Landing page visual utilities */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.08) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.56);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.text-gradient {
+  background-image: linear-gradient(to right, #2563eb, #4f46e5, #2563eb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hover\:glow-card:hover {
+  box-shadow: 0 16px 50px -24px rgba(37, 99, 235, 0.45);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -250% 0;
+  }
+  100% {
+    background-position: 250% 0;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(37, 99, 235, 0);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(37, 99, 235, 0.45);
+  }
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3.8s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.2s ease-in-out infinite;
+}
+

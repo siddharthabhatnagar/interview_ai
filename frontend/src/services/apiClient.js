@@ -10,13 +10,19 @@ const apiClient = axios.create({
   },
 });
 
+const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/google', '/auth/refresh'];
+
 // Request interceptor to add JWT token
 apiClient.interceptors.request.use(
   (config) => {
+    const requestUrl = config.url || '';
+    const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((path) => requestUrl.includes(path));
     const token = useAuthStore.getState().token;
-    if (token) {
+
+    if (token && !isPublicAuthRequest) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => {
@@ -29,12 +35,23 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || '';
+    const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((path) => requestUrl.includes(path));
+
+    if (isPublicAuthRequest) {
+      return Promise.reject(error);
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const { token } = useAuthStore.getState();
+        if (!token) {
+          useAuthStore.getState().logout();
+          return Promise.reject(error);
+        }
+
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
