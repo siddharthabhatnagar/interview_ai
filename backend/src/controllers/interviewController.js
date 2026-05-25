@@ -1,6 +1,7 @@
 // Interview Controller - Phase 1
 import Interview from '../models/Interview.js';
 import User from '../models/User.js';
+import env from '../config/env.js';
 import { ApiResponse, ApiError, asyncHandler } from '../utils/apiResponse.js';
 import {
   generateInitialQuestion,
@@ -15,6 +16,7 @@ import {
 } from '../services/deepgramService.js';
 import { generateToken, getLiveKitUrl } from '../services/livekitService.js';
 import { CREDIT_COSTS, DURATION_QUESTIONS } from '../services/paymentService.js';
+import { getAgentStatus, isAgentRunning, startAgent } from '../services/agentManager.js';
 
 /**
  * Start a new interview
@@ -301,11 +303,27 @@ export const getInterviewHistory = asyncHandler(async (req, res) => {
   );
 });
 
+/**
+ * Get LiveKit agent process diagnostics.
+ * @route GET /api/interview/agent/status
+ * @middleware verifyJWT
+ */
+export const getLiveAgentStatus = asyncHandler(async (req, res) => {
+  res.json(
+    new ApiResponse(
+      200,
+      getAgentStatus(),
+      'LiveKit agent status retrieved successfully'
+    )
+  );
+});
+
 export default {
   startInterview,
   getInterview,
   processAudio,
   getInterviewHistory,
+  getLiveAgentStatus,
 };
 
 /**
@@ -335,6 +353,11 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
 
   // Determine max questions from duration
   const maxQuestions = DURATION_QUESTIONS[duration] || 8;
+
+  if (env.AUTO_START_AGENT && !isAgentRunning()) {
+    console.warn('[LiveInterview] LiveKit agent is not running. Attempting to start it before creating the room token.');
+    startAgent();
+  }
 
   // Create interview record
   const interview = await Interview.create({
@@ -391,6 +414,7 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
         token,
         roomName,
         status: interview.status,
+        agentStatus: getAgentStatus(),
       },
       'Live interview started successfully'
     )
@@ -406,7 +430,6 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
 export const saveLiveResults = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const agentKey = req.headers['x-agent-api-key'];
-  const env = (await import('../config/env.js')).default;
 
   // Verify agent API key (simple shared secret)
   if (env.AGENT_API_KEY && agentKey !== env.AGENT_API_KEY) {

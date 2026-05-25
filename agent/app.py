@@ -26,7 +26,7 @@ def check_environment_vars():
         for v in missing:
             print(f"  - {v}", file=sys.stderr)
         sys.exit(1)
-    print("All required API keys loaded.")
+    print("All required API keys loaded.", flush=True)
 
 # Question banks by interview type and difficulty
 QUESTION_BANKS = {
@@ -760,10 +760,12 @@ async def save_interview_results(interview_id, transcript_data, backend_url, api
 
 
 async def entrypoint(ctx: JobContext):
+    print("Agent job received. Connecting to LiveKit room...", flush=True)
     await ctx.connect()
 
     room = ctx.room
     metadata = {}
+    print(f"Agent connected to room: {room.name}", flush=True)
 
     # 1) Try room-level metadata first
     try:
@@ -810,7 +812,7 @@ async def entrypoint(ctx: JobContext):
     job_description = metadata.get("jobDescription", "")
     coach_mode = metadata.get("coachMode", False)
 
-    print(f"Starting interview: type={interview_type}, level={difficulty_level}, duration={duration}, target={target_minutes}m, questions={max_questions}, followups={followup_depth}, id={interview_id}, resume={'yes' if resume_text else 'no'}, jd={'yes' if job_description else 'no'}, coach={'yes' if coach_mode else 'no'}")
+    print(f"Starting interview: type={interview_type}, level={difficulty_level}, duration={duration}, target={target_minutes}m, questions={max_questions}, followups={followup_depth}, id={interview_id}, resume={'yes' if resume_text else 'no'}, jd={'yes' if job_description else 'no'}, coach={'yes' if coach_mode else 'no'}", flush=True)
 
     agent = InterviewerAgent(
         interview_type=interview_type,
@@ -875,5 +877,5 @@ async def entrypoint(ctx: JobContext):
 if __name__ == "__main__":
     check_environment_vars()
     opts = WorkerOptions(entrypoint_fnc=entrypoint)
-    print("Starting IntervuAI Agent Worker...")
+    print("Starting IntervuAI Agent Worker...", flush=True)
     agents.cli.run_app(opts)

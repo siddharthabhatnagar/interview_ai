@@ -5,6 +5,7 @@ import {
   getInterview,
   processAudio,
   getInterviewHistory,
+  getLiveAgentStatus,
   startLiveInterview,
   saveLiveResults,
   completeLiveInterview,
@@ -24,6 +25,7 @@ router.use(verifyTermsAcceptance);
 // Interview management
 router.post('/start', startInterview);
 router.post('/start-live', startLiveInterview);
+router.get('/agent/status', getLiveAgentStatus);
 router.get('/user/history', getInterviewHistory);
 router.get('/:id', getInterview);
 router.post('/:id/process-audio', processAudio);
