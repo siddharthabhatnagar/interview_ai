@@ -63,9 +63,9 @@ export const CREDIT_COSTS = {
 
 // Map duration tier to number of questions for the agent
 export const DURATION_QUESTIONS = {
-  quick: 5,
-  standard: 8,
-  deep: 12,
+  quick: 6,
+  standard: 9,
+  deep: 14,
 };
 
 /**

@@ -315,7 +315,7 @@ export default {
  * @body {interviewType, difficultyLevel}
  */
 export const startLiveInterview = asyncHandler(async (req, res) => {
-  const { interviewType = 'fullstack', difficultyLevel = 'intermediate', duration = 'standard', analysisType = 'basic', resumeText = '', jobDescription = '', coachMode = false } = req.body;
+  const { interviewType = 'fullstack', difficultyLevel = 'intermediate', duration = 'standard', analysisType = 'basic', resumeText = '', jobDescription = '', coachMode = false, candidateLevel = 'student' } = req.body;
   const userId = req.user.userId;
 
   // Calculate credit cost
@@ -361,7 +361,9 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
     interviewId: interview._id.toString(),
     interviewType,
     difficultyLevel,
+    duration,
     maxQuestions,
+    candidateLevel,
     userName: user.name,
     userId: userId,
   };

@@ -6,6 +6,7 @@ import sys
 import json
 import asyncio
 import aiohttp
+import time
 from livekit import agents
 from livekit.agents import Agent, AgentSession, JobContext, WorkerOptions
 from livekit.plugins import openai, silero, deepgram
@@ -441,6 +442,48 @@ def get_questions_for_interview(interview_type, difficulty_level):
     return type_questions.get(difficulty_level, type_questions["intermediate"])
 
 
+def get_progressive_questions(interview_type, difficulty_level):
+    """Start with fundamentals, then gradually increase depth."""
+    normalized_type = {
+        "data-science": "data_scientist",
+        "data_science": "data_scientist",
+        "ai-ml-engineer": "ai_ml_engineer",
+        "gen-ai-engineer": "gen_ai_engineer",
+        "mlops-engineer": "mlops_engineer",
+        "data-engineer": "data_engineer",
+    }.get(interview_type, interview_type)
+
+    banks = QUESTION_BANKS.get(normalized_type, QUESTION_BANKS["fullstack"])
+
+    if difficulty_level == "beginner":
+        return banks["beginner"]
+    if difficulty_level == "intermediate":
+        return banks["beginner"][:3] + banks["intermediate"][:6]
+    if difficulty_level == "advanced":
+        return banks["beginner"][:2] + banks["intermediate"][:3] + banks["advanced"][:6]
+
+    return banks["intermediate"]
+
+
+DURATION_CONFIG = {
+    "quick": {
+        "minutes": 8,
+        "questions": 6,
+        "followup_depth": 1,
+    },
+    "standard": {
+        "minutes": 15,
+        "questions": 9,
+        "followup_depth": 2,
+    },
+    "deep": {
+        "minutes": 25,
+        "questions": 14,
+        "followup_depth": 3,
+    },
+}
+
+
 # Field-specific interviewer personas and focus areas
 INTERVIEWER_PERSONAS = {
     "frontend": {
@@ -503,6 +546,7 @@ INTERVIEWER_PERSONAS = {
 class InterviewerAgent(Agent):
     def __init__(self, interview_type="fullstack", difficulty_level="intermediate",
                  interview_id=None, user_name="Candidate", max_questions=8,
+                 followup_depth=2, target_minutes=15, candidate_level="student",
                  resume_text="", job_description="", coach_mode=False):
         self.interview_type = interview_type
         self.difficulty_level = difficulty_level
@@ -511,9 +555,13 @@ class InterviewerAgent(Agent):
         self.conversation_log = []
         self.question_count = 0
         self.max_questions = max_questions
+        self.followup_depth = followup_depth
+        self.target_minutes = target_minutes
+        self.candidate_level = candidate_level
+        self.start_time = time.time()
         self.coach_mode = coach_mode
 
-        questions = get_questions_for_interview(interview_type, difficulty_level)
+        questions = get_progressive_questions(interview_type, difficulty_level)
         questions_text = json.dumps(questions, indent=2)
 
         llm = openai.LLM.with_cerebras(model="llama3.1-8b")
@@ -581,12 +629,24 @@ You are in PRACTICE/COACH mode. After the candidate answers each question, provi
 - Frame tips as friendly advice: "Quick tip" or "One thing that would make that answer even stronger..."
 - Still ask exactly ONE question per turn after giving your coaching tip."""
 
+        student_section = ""
+        if candidate_level in ("student", "intern", "fresher", "entry"):
+            student_section = """
+
+STUDENT / INTERNSHIP MODE:
+- Prioritize projects, coursework, internships, hackathons, and self-built work over job experience.
+- Avoid enterprise-scale architecture questions early.
+- Focus first on implementation details, debugging, code structure, and trade-offs in their own projects.
+- Ask practical coding and product-building questions before large-scale design questions.
+- If they mention AI, LangChain, ML pipelines, or similar projects, ask why they chose that tool and how they implemented one concrete part."""
+
         instructions = f"""You are {persona_data['persona']}, conducting a technical interview for IntervuAI. You are a domain expert in {interview_type.replace('_', ' ')}.
 
 INTERVIEW DETAILS:
 - Interview Type: {interview_type.replace('_', ' ').replace('-', ' ').title()}
 - Difficulty Level: {difficulty_level.title()}
 - Candidate Name: {user_name}
+- Candidate Level: {candidate_level.title()}
 
 YOUR INTERVIEWER PERSONALITY:
 - Be friendly, confident, and concise.
@@ -605,11 +665,13 @@ TECHNICAL QUESTION BANK (Use as inspiration, not a script — adapt based on the
 {questions_text}
 {resume_section}{jd_section}{combined_context}
 INTERVIEW FLOW & RULES:
-1. OPENING (Question 1): Use a brief casual greeting, introduce yourself in one sentence, then ask only this: "Could you briefly introduce yourself?"
-2. CONTEXT BRIDGE (Question 2): Ask one resume-aware or project-aware question. If no resume exists, ask about one recent project.
-3. TECHNICAL CORE (Most questions): Move quickly into technical depth for the selected role. Prefer practical, role-specific questions over generic career questions.
-4. ADAPTIVE FOLLOW-UP: If an answer is vague, ask one precise follow-up about the same topic. If the answer is strong, move one level deeper.
-5. CHALLENGE + CLOSE (Final questions): Ask one realistic scenario question, then close with a short wrap-up.
+1. Question 1: Brief greeting and introduction.
+2. Question 2: Ask about one recent project.
+3. Question 3: Ask one implementation detail from that project.
+4. Question 4 onward: Start easier and gradually increase difficulty.
+5. Connect questions to the candidate's previous answers.
+6. Ask one realistic scenario question near the end.
+7. Finish with strengths and improvements.
 
 QUESTION SELECTION POLICY:
 - At least 70 percent of the interview must test technical skill.
@@ -621,6 +683,8 @@ QUESTION SELECTION POLICY:
 CONVERSATIONAL RULES:
 - React briefly to each answer, then move on.
 - Reactions must be 1-2 short sentences maximum.
+- Use varied natural reactions such as "Interesting", "Got it", "Makes sense", "Nice", "Understood", "Thanks for explaining that", and "Okay".
+- Choose reactions naturally and avoid repeating the same phrase.
 - If an answer is surface-level, ask one probing follow-up.
 - If an answer is weak, challenge gently in one sentence, then ask one clarifying question.
 - Ask exactly ONE question per turn. Never bundle multiple questions.
@@ -628,7 +692,24 @@ CONVERSATIONAL RULES:
 - Do not ask compound questions joined by "and", "also", "plus", or "as well as".
 - If you catch yourself asking two things, keep the more technical one and remove the other.
 - Do not read questions sequentially; keep the conversation natural.
-- Ask a total of {self.max_questions} questions.
+- Ask up to {self.max_questions} questions.
+- Do not exceed {self.followup_depth} follow-up turns on the same topic.
+
+SPECIAL CONVERSATION RULES:
+- If the candidate says "repeat", "can you repeat", "didn't understand", or "say again", shorten the question, remove jargon, and explain with a simple example.
+- Never repeat a confusing question word-for-word.
+
+WEAK ANSWER HANDLING:
+- If the candidate says "I don't know" or gives a very short answer, do not move immediately to a new topic.
+- Simplify the question, give one small hint, and ask an easier version.
+- Keep the tone calm and supportive.
+
+TIME MANAGEMENT RULES:
+- Target interview duration: {self.target_minutes} minutes.
+- Current maximum questions: {self.max_questions}.
+- Follow-up depth: {self.followup_depth}.
+- If running behind, shorten reactions, reduce follow-ups, and move toward closing.
+- If ahead of schedule, ask deeper follow-ups or one practical scenario question.
 
 SPEECH & FORMAT CONSTRAINTS:
 - You are speaking via TTS. Absolutely NO markdown, bullet points, numbered lists, or code blocks.
@@ -640,12 +721,15 @@ SPEECH & FORMAT CONSTRAINTS:
 CONCLUSION:
 - Wrap up by mentioning one specific strength and one area to explore further.
 - Tell them their detailed feedback with scores will be available on their dashboard shortly.
-{coach_section}"""
+{student_section}{coach_section}"""
 
         super().__init__(
             instructions=instructions,
             stt=stt, llm=llm, tts=tts, vad=vad
         )
+
+    def get_elapsed_minutes(self):
+        return (time.time() - self.start_time) / 60
 
     async def on_enter(self):
         self.session.generate_reply(
@@ -716,12 +800,17 @@ async def entrypoint(ctx: JobContext):
     difficulty_level = metadata.get("difficultyLevel", "intermediate")
     interview_id = metadata.get("interviewId", None)
     user_name = metadata.get("userName", "Candidate")
-    max_questions = metadata.get("maxQuestions", 8)
+    duration = metadata.get("duration", "standard")
+    duration_config = DURATION_CONFIG.get(duration, DURATION_CONFIG["standard"])
+    max_questions = metadata.get("maxQuestions", duration_config["questions"])
+    followup_depth = metadata.get("followupDepth", duration_config["followup_depth"])
+    target_minutes = metadata.get("targetMinutes", duration_config["minutes"])
+    candidate_level = metadata.get("candidateLevel", "student")
     resume_text = metadata.get("resumeText", "")
     job_description = metadata.get("jobDescription", "")
     coach_mode = metadata.get("coachMode", False)
 
-    print(f"Starting interview: type={interview_type}, level={difficulty_level}, id={interview_id}, resume={'yes' if resume_text else 'no'}, jd={'yes' if job_description else 'no'}, coach={'yes' if coach_mode else 'no'}")
+    print(f"Starting interview: type={interview_type}, level={difficulty_level}, duration={duration}, target={target_minutes}m, questions={max_questions}, followups={followup_depth}, id={interview_id}, resume={'yes' if resume_text else 'no'}, jd={'yes' if job_description else 'no'}, coach={'yes' if coach_mode else 'no'}")
 
     agent = InterviewerAgent(
         interview_type=interview_type,
@@ -729,6 +818,9 @@ async def entrypoint(ctx: JobContext):
         interview_id=interview_id,
         user_name=user_name,
         max_questions=max_questions,
+        followup_depth=followup_depth,
+        target_minutes=target_minutes,
+        candidate_level=candidate_level,
         resume_text=resume_text,
         job_description=job_description,
         coach_mode=coach_mode,
@@ -757,9 +849,10 @@ async def entrypoint(ctx: JobContext):
 
     await session.start(room=room, agent=agent)
 
-    # Wait for participant to disconnect or timeout (20 min max)
+    # Wait for participant to disconnect or duration-aware timeout.
+    session_timeout_seconds = int((target_minutes + 2) * 60)
     try:
-        await asyncio.sleep(1200)  # 20 min max
+        await asyncio.sleep(session_timeout_seconds)
     except asyncio.CancelledError:
         pass
 
