@@ -38,7 +38,7 @@ COPY --from=frontend-build /app/frontend/dist ./public
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD-SHELL curl --fail "http://localhost:${PORT:-3000}/api/health" || exit 1
+  CMD curl --fail "http://localhost:${PORT:-3000}/api/health" || exit 1
 
 # Expose port
 EXPOSE 3000

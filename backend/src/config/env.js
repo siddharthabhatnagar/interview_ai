@@ -34,6 +34,7 @@ const env = {
   LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
   AGENT_API_KEY: process.env.AGENT_API_KEY || '',
   AUTO_START_AGENT: process.env.AUTO_START_AGENT !== 'false',
+  DEPLOY_REVISION: 'railway-healthcheck-cmd',
 
   // Google OAuth
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
