@@ -7,11 +7,15 @@ COPY frontend/ ./
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS production
+# Use Debian slim instead of Alpine because livekit-agents depends on
+# livekit-blingfire, which does not publish Alpine/musl wheels.
+FROM node:20-bookworm-slim AS production
 WORKDIR /app
 
 # Python runtime for the LiveKit agent that is spawned by the backend
-RUN apk add --no-cache python3 py3-pip && \
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends python3 python3-venv python3-pip curl ca-certificates && \
+  rm -rf /var/lib/apt/lists/* && \
   python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH" \
@@ -34,7 +38,7 @@ COPY --from=frontend-build /app/frontend/dist ./public
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD curl --fail http://localhost:3000/api/health || exit 1
 
 # Expose port
 EXPOSE 3000
