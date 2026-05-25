@@ -1,5 +1,13 @@
 import { create } from 'zustand';
 import apiClient from '../services/apiClient';
+import API_BASE_URL from '../services/apiBase';
+
+const getAuthErrorMessage = (error, fallback) => {
+  if (error.response?.data?.message) return error.response.data.message;
+  if (error.response?.status) return `${fallback}. API returned ${error.response.status}.`;
+  if (error.request) return `${fallback}. Could not reach API at ${API_BASE_URL}.`;
+  return fallback;
+};
 
 export const useAuthStore = create((set) => ({
   currentUser: null,
@@ -27,7 +35,7 @@ export const useAuthStore = create((set) => ({
       localStorage.setItem('token', token);
       return response.data.data;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      const errorMessage = getAuthErrorMessage(error, 'Registration failed');
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -45,7 +53,7 @@ export const useAuthStore = create((set) => ({
       localStorage.setItem('token', token);
       return response.data.data;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const errorMessage = getAuthErrorMessage(error, 'Login failed');
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -65,7 +73,7 @@ export const useAuthStore = create((set) => ({
       localStorage.setItem('token', token);
       return { ...response.data.data, requiresTermsAcceptance };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Google sign-in failed';
+      const errorMessage = getAuthErrorMessage(error, 'Google sign-in failed');
       set({ error: errorMessage, loading: false });
       throw error;
     }
@@ -78,7 +86,7 @@ export const useAuthStore = create((set) => ({
       set({ currentUser: response.data.data, loading: false });
       return response.data.data;
     } catch (error) {
-      set({ error: error.response?.data?.message || 'Failed to fetch user', loading: false });
+      set({ error: getAuthErrorMessage(error, 'Failed to fetch user'), loading: false });
       throw error;
     }
   },
@@ -94,7 +102,7 @@ export const useAuthStore = create((set) => ({
       set({ currentUser: user, loading: false });
       return response.data.data;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to accept terms';
+      const errorMessage = getAuthErrorMessage(error, 'Failed to accept terms');
       set({ error: errorMessage, loading: false });
       throw error;
     }

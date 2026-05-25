@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import API_BASE_URL from '../services/apiBase';
 import { useInterviewStore } from '../store/interviewStore';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/Card';
@@ -62,8 +63,7 @@ export function InterviewRoomPage() {
       const arrayBuffer = await audioBlob.arrayBuffer();
       const token = useAuthStore.getState().token;
       
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiBase}/interview/${interviewId}/process-audio`, {
+      const response = await fetch(`${API_BASE_URL}/interview/${interviewId}/process-audio`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
