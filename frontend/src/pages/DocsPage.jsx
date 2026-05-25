@@ -59,16 +59,16 @@ const TIER_FEATURES = [
 ];
 
 const CREDIT_TABLE = [
-  { label: 'Quick (~5 min, 4 Qs)', duration: 1, basic: 1, detailed: 2, premium: 3 },
-  { label: 'Standard (~10 min, 6 Qs)', duration: 2, basic: 2, detailed: 3, premium: 4 },
-  { label: 'Deep Dive (~15 min, 8 Qs)', duration: 3, basic: 3, detailed: 4, premium: 5 },
+  { label: 'Quick (~8 min, 6 Qs)', duration: 1, basic: 1, detailed: 2, premium: 3 },
+  { label: 'Standard (~15 min, 9 Qs)', duration: 2, basic: 2, detailed: 3, premium: 4 },
+  { label: 'Deep Dive (~25 min, 14 Qs)', duration: 3, basic: 3, detailed: 4, premium: 5 },
 ];
 
 const PLANS = [
   { name: 'Free Trial', price: '₹0', credits: 3, best: '1-2 interviews', color: 'gray' },
-  { name: 'Basic', price: '₹299 / $3.59', credits: 8, best: '4-5 interviews', color: 'blue' },
-  { name: 'Growth', price: '₹799 / $9.59', credits: 30, best: '15+ interviews', color: 'indigo' },
-  { name: 'Pro', price: '₹1999 / $23.99', credits: 100, best: '50+ interviews', color: 'purple' },
+  { name: 'Basic', price: '₹199 / $2.39', credits: 10, best: '6-8 interviews', color: 'blue' },
+  { name: 'Growth', price: '₹499 / $5.99', credits: 30, best: '18-22 interviews', color: 'indigo' },
+  { name: 'Pro', price: '₹999 / $11.99', credits: 80, best: '45-60 interviews', color: 'purple' },
 ];
 
 const DIMENSIONS = [
@@ -85,7 +85,7 @@ const FAQS = [
   { q: 'How are scores calculated?', a: 'Each answer is independently scored across 5 dimensions (Technical Accuracy, Communication, Problem Solving, Depth, Experience) on a 0–100 scale. Your overall score is the average across all questions.' },
   { q: 'Can I upload my resume?', a: 'Yes! You can paste your resume text and/or a target job description before starting. The AI will personalize questions based on your experience and the role you\'re targeting.' },
   { q: 'What\'s the difference between Basic, Detailed, and Premium?', a: 'Basic gives concise feedback. Detailed adds multi-section breakdowns. Premium gives the full package: improvement tips per question, estimated seniority level, a personalized learning roadmap, and how you compare to the market.' },
-  { q: 'How many interviews can I do per plan?', a: 'It depends on your settings. A Quick + Basic interview costs 1 credit, while a Deep Dive + Premium costs 5 credits. Free Trial (3 credits) gets 1-2 interviews, Basic (8 credits) gets 4-5, Growth (30 credits) gets 15+, and Pro (100 credits) gets 50+ depending on your chosen settings.' },
+  { q: 'How many interviews can I do per plan?', a: 'It depends on your settings. A Quick + Basic interview costs 1 credit, while a Deep Dive + Premium costs 5 credits. Free Trial (3 credits) gets 1-2 interviews, Basic (10 credits) gets 6-8, Growth (30 credits) gets 18-22, and Pro (80 credits) gets 45-60 depending on your chosen settings.' },
   { q: 'Is my data secure?', a: 'Yes. Audio is processed in real-time and not stored. Interview transcripts are stored securely in MongoDB Atlas with encryption. We never share your data with third parties.' },
   { q: 'What difficulty levels are available?', a: 'Beginner (0–1 year experience), Intermediate (2–4 years), and Advanced (5+ years). The AI adapts difficulty dynamically within the session based on your performance.' },
 ];
@@ -204,9 +204,9 @@ export function DocsPage() {
             <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
               <h3 className="font-bold text-gray-900 dark:text-white mb-3">Duration Credits</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Quick (~5 min, 4 questions)</span><span className="font-bold text-gray-900 dark:text-white">1 credit</span></div>
-                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Standard (~10 min, 6 questions)</span><span className="font-bold text-gray-900 dark:text-white">2 credits</span></div>
-                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Deep Dive (~15 min, 8 questions)</span><span className="font-bold text-gray-900 dark:text-white">3 credits</span></div>
+                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Quick (~8 min, 6 questions)</span><span className="font-bold text-gray-900 dark:text-white">1 credit</span></div>
+                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Standard (~15 min, 9 questions)</span><span className="font-bold text-gray-900 dark:text-white">2 credits</span></div>
+                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Deep Dive (~25 min, 14 questions)</span><span className="font-bold text-gray-900 dark:text-white">3 credits</span></div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">

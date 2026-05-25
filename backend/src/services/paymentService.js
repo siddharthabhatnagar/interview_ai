@@ -22,28 +22,28 @@ function getRazorpay() {
 // Subscription plans configuration
 export const PLANS = {
   starter: {
-    name: 'Starter',
-    priceINR: 499,
-    priceUSD: 5.99,
-    credits: 15,
+    name: 'Basic',
+    priceINR: 199,
+    priceUSD: 2.39,
+    credits: 10,
     duration: 30, // days
-    features: ['15 credits', 'All interview types', 'Basic + Detailed feedback'],
+    features: ['10 credits'],
   },
   growth: {
     name: 'Growth',
-    priceINR: 999,
-    priceUSD: 11.99,
-    credits: 35,
+    priceINR: 499,
+    priceUSD: 5.99,
+    credits: 30,
     duration: 30,
-    features: ['35 credits', 'All interview types', 'Premium analysis', 'Priority support'],
+    features: ['30 credits'],
   },
   pro: {
     name: 'Pro',
-    priceINR: 1999,
-    priceUSD: 23.99,
+    priceINR: 999,
+    priceUSD: 11.99,
     credits: 80,
     duration: 30,
-    features: ['80 credits', 'All interview types', 'Premium analysis', 'Priority support', 'Detailed roadmaps'],
+    features: ['80 credits'],
   },
 };
 

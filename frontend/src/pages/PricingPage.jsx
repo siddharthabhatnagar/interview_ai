@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { CheckCircle, X, BookOpen, Zap } from 'lucide-react';
+import { BookOpen, FileText, Map, MessagesSquare, Building2, UserCheck, Zap } from 'lucide-react';
 import apiClient from '../services/apiClient';
 
 const plans = [
@@ -12,20 +12,9 @@ const plans = [
     name: 'Free Trial',
     priceINR: 0,
     priceUSD: 0,
-    description: 'Get started with IntervuAI',
     credits: 3,
     perCredit: 0,
-    interviews: '1-2',
-    features: [
-      { text: '1-2 practice interviews', included: true },
-      { text: 'All 9 interview types', included: true },
-      { text: 'Basic feedback & scoring', included: true },
-      { text: 'Standard & Quick interviews only', included: true },
-      { text: 'Community support', included: true },
-      { text: 'Detailed analysis', included: false },
-      { text: 'Deep dive interviews (25 min)', included: false },
-      { text: 'Priority support', included: false },
-    ],
+    interviews: 'Start practicing',
     cta: 'Get Started Free',
     popular: false,
     badge: null,
@@ -33,71 +22,71 @@ const plans = [
   {
     id: 'basic',
     name: 'Basic',
-    priceINR: 299,
-    priceUSD: 3.59,
-    description: 'For regular practice',
-    credits: 8,
-    perCredit: 37,
-    interviews: '4-5',
-    features: [
-      { text: '4-5 practice interviews', included: true },
-      { text: 'All 9 interview types', included: true },
-      { text: 'Basic + Standard feedback', included: true },
-      { text: 'Quick, Standard, & Deep Dive', included: true },
-      { text: 'Detailed analysis (+1 credit/use)', included: true },
-      { text: 'Priority support (24h response)', included: true },
-      { text: 'Download performance reports', included: true },
-      { text: 'VIP email support', included: false },
-    ],
-    cta: 'Buy 8 Credits',
+    priceINR: 199,
+    priceUSD: 2.39,
+    credits: 10,
+    perCredit: 19,
+    interviews: '6-8',
+    cta: 'Buy 10 Credits',
     popular: false,
     badge: null,
   },
   {
     id: 'growth',
     name: 'Growth',
-    priceINR: 799,
-    priceUSD: 9.59,
-    description: 'Best value for serious prep',
+    priceINR: 499,
+    priceUSD: 5.99,
     credits: 30,
-    perCredit: 27,
-    interviews: '15+',
-    features: [
-      { text: '15+ practice interviews', included: true },
-      { text: 'All 9 interview types', included: true },
-      { text: 'All feedback & scoring tiers', included: true },
-      { text: 'All interview durations', included: true },
-      { text: 'Unlimited detailed analysis', included: true },
-      { text: 'Premium analysis reports', included: true },
-      { text: 'Weekly progress tracking', included: true },
-      { text: 'Priority email & chat support', included: true },
-    ],
+    perCredit: 16,
+    interviews: '18-22',
     cta: 'Buy 30 Credits',
     popular: true,
-    badge: '29% savings',
+    badge: 'Most Popular',
   },
   {
     id: 'pro',
     name: 'Pro',
-    priceINR: 1999,
-    priceUSD: 23.99,
-    description: 'Maximum preparation power',
-    credits: 100,
-    perCredit: 20,
-    interviews: '50+',
-    features: [
-      { text: '50+ practice interviews', included: true },
-      { text: 'All 9 interview types', included: true },
-      { text: 'All feedback & scoring tiers', included: true },
-      { text: 'All interview durations', included: true },
-      { text: 'Unlimited analysis & reports', included: true },
-      { text: 'Advanced AI insights', included: true },
-      { text: 'Progress analytics dashboard', included: true },
-      { text: '24/7 VIP support & career guidance', included: true },
-    ],
-    cta: 'Buy 100 Credits',
+    priceINR: 999,
+    priceUSD: 11.99,
+    credits: 80,
+    perCredit: 12,
+    interviews: '45-60',
+    cta: 'Buy 80 Credits',
     popular: false,
-    badge: '47% savings',
+    badge: 'Best Value',
+  },
+];
+
+const addOns = [
+  {
+    name: 'Resume Review',
+    price: 49,
+    icon: FileText,
+    items: ['ATS score', 'Missing keywords', 'Skill gap analysis', 'Resume improvement suggestions'],
+  },
+  {
+    name: 'Personalized Preparation Roadmap',
+    price: 99,
+    icon: Map,
+    items: ['Current skill assessment', 'Weak-area detection', '2-4 week learning plan', 'Recommended projects', 'Interview preparation sequence'],
+  },
+  {
+    name: 'Career Guidance Session',
+    price: 199,
+    icon: MessagesSquare,
+    items: ['Role selection advice', 'Skills to learn next', 'Industry roadmap'],
+  },
+  {
+    name: 'Company-Specific Preparation Pack',
+    price: 99,
+    icon: Building2,
+    items: ['Question bank', 'Mock interviews', 'Focus topics'],
+  },
+  {
+    name: 'Human Expert Review',
+    price: 299,
+    icon: UserCheck,
+    items: ['Human feedback on interview recording', 'Communication review', 'Technical feedback'],
   },
 ];
 
@@ -222,7 +211,7 @@ export function PricingPage() {
               Transparent, Simple Pricing
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Start free and upgrade anytime. Scale your interview prep to match your goals.
+              Start free, then buy only the credits you need for interview practice.
             </p>
 
             {/* Currency Toggle */}
@@ -274,8 +263,10 @@ export function PricingPage() {
 
                   {/* Plan Header */}
                   <div className="mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">{plan.description}</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                    {plan.id !== 'free' && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">One-time</p>
+                    )}
                   </div>
 
                   {/* Pricing */}
@@ -289,7 +280,7 @@ export function PricingPage() {
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2">{plan.credits} credits</p>
                     {getPrice(plan) > 0 && (
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                        {currencySymbol}{plan.perCredit}/credit
+                        ₹{plan.perCredit}/credit
                       </p>
                     )}
                   </div>
@@ -298,23 +289,11 @@ export function PricingPage() {
                   <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Practice Interviews</p>
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{plan.interviews}</p>
+                    {plan.id !== 'free' && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Approx.</p>
+                    )}
                   </div>
-
-                  {/* Features */}
-                  <ul className="space-y-3 mb-8 flex-grow">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        {feature.included ? (
-                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <X className="w-5 h-5 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" />
-                        )}
-                        <span className={feature.included ? 'text-gray-700 dark:text-gray-300 text-sm' : 'text-gray-400 dark:text-gray-600 text-sm'}>
-                          {feature.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex-grow" />
 
                   {/* CTA Button */}
                   <Button
@@ -333,17 +312,55 @@ export function PricingPage() {
             ))}
           </div>
 
-          {/* Comparison Table */}
+          {/* Add-ons */}
+          <div className="max-w-5xl mx-auto mb-20">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Separate Services</h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-3">
+                Add focused help only when you need it.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {addOns.map((addon) => {
+                const Icon = addon.icon;
+                return (
+                  <div
+                    key={addon.name}
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-5">
+                      <div className="w-11 h-11 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{addon.price}</p>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{addon.name}</h3>
+                    <ul className="space-y-2">
+                      {addon.items.map((item) => (
+                        <li key={item} className="text-sm text-gray-600 dark:text-gray-400">
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Credit Summary */}
           <div className="max-w-5xl mx-auto mb-20">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 px-8 py-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">What's Included in Each Plan</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Credit Packs</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left px-8 py-4 font-semibold text-gray-900 dark:text-white">Feature</th>
+                      <th className="text-left px-8 py-4 font-semibold text-gray-900 dark:text-white">Plan</th>
                       {plans.map(plan => (
                         <th key={plan.id} className="text-center px-6 py-4 font-semibold text-gray-900 dark:text-white text-sm">{plan.name}</th>
                       ))}
@@ -352,12 +369,9 @@ export function PricingPage() {
                   <tbody>
                     {[
                       { label: 'Credits', values: plans.map(p => p.credits) },
-                      { label: 'Practice Interviews', values: plans.map(p => p.interviews) },
-                      { label: 'Interview Types', values: ['9 types', '9 types', '9 types', '9 types'] },
-                      { label: 'Interview Durations', values: ['Quick, Standard', 'Quick, Standard, Deep', 'All durations', 'All durations'] },
-                      { label: 'Analysis Feedback', values: ['Basic', 'Standard+', 'Premium', 'Premium+'] },
-                      { label: 'Performance Reports', values: ['Basic', 'Standard', 'Advanced', 'Advanced+'] },
-                      { label: 'Support', values: ['Community', 'Email 24h', 'Chat & Email', '24/7 VIP'] },
+                      { label: 'Approx. interviews', values: plans.map(p => p.interviews) },
+                      { label: 'Price', values: plans.map(p => p.priceINR === 0 ? 'Free' : `₹${p.priceINR}`) },
+                      { label: 'Cost per credit', values: plans.map(p => p.priceINR === 0 ? 'Free' : `₹${p.perCredit}`) },
                     ].map((row, idx) => (
                       <tr key={idx} className="border-b border-gray-100 dark:border-gray-700">
                         <td className="px-8 py-4 font-medium text-gray-900 dark:text-white">{row.label}</td>
