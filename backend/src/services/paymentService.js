@@ -21,6 +21,14 @@ function getRazorpay() {
 
 // Subscription plans configuration
 export const PLANS = {
+  test: {
+    name: 'Test',
+    priceINR: 1,
+    priceUSD: 1,
+    credits: 1,
+    duration: 30,
+    features: ['1 credit'],
+  },
   starter: {
     name: 'Basic',
     priceINR: 199,
@@ -74,7 +82,7 @@ export const DURATION_QUESTIONS = {
 export const createOrder = async (plan, userId, currency = 'INR') => {
   const planDetails = PLANS[plan];
   if (!planDetails) {
-    throw new ApiError(400, `Invalid plan: ${plan}. Choose 'starter', 'growth', or 'pro'.`);
+    throw new ApiError(400, `Invalid plan: ${plan}. Choose 'test', 'starter', 'growth', or 'pro'.`);
   }
 
   const validCurrency = currency === 'USD' ? 'USD' : 'INR';

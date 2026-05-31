@@ -20,6 +20,18 @@ const plans = [
     badge: null,
   },
   {
+    id: 'test',
+    name: 'Test',
+    priceINR: 1,
+    priceUSD: 1,
+    credits: 1,
+    perCredit: 1,
+    interviews: 'Payment test',
+    cta: 'Test Payment',
+    popular: false,
+    badge: 'Temporary',
+  },
+  {
     id: 'basic',
     name: 'Basic',
     priceINR: 199,
@@ -234,7 +246,7 @@ export function PricingPage() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-20">
             {plans.map((plan) => (
               <div key={plan.id} className="relative">
                 {plan.popular && (
@@ -256,6 +268,13 @@ export function PricingPage() {
                   {plan.badge && plan.popular && (
                     <div className="absolute top-8 right-4">
                       <span className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 text-xs font-bold px-3 py-1 rounded-full">
+                        {plan.badge}
+                      </span>
+                    </div>
+                  )}
+                  {plan.badge && !plan.popular && plan.id === 'test' && (
+                    <div className="absolute top-8 right-4">
+                      <span className="bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 text-xs font-bold px-3 py-1 rounded-full">
                         {plan.badge}
                       </span>
                     </div>

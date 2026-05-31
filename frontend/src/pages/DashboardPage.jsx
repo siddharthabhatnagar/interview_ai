@@ -7,10 +7,11 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Loading } from '../components/Loading';
 import { formatDate } from '../utils/formatters';
+import { Trash2 } from 'lucide-react';
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAuthStore();
+  const { currentUser, deleteAccount } = useAuthStore();
   const { interviewHistory, totalInterviewCount, getHistory, loading } = useInterviewStore();
   const [selectedType, setSelectedType] = useState('frontend');
   const [selectedLevel, setSelectedLevel] = useState('beginner');
@@ -22,6 +23,10 @@ export function DashboardPage() {
   const [coachMode, setCoachMode] = useState(false);
   const [showResume, setShowResume] = useState(false);
   const [showJD, setShowJD] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const DURATION_CREDITS = { quick: 1, standard: 2, deep: 3 };
   const ANALYSIS_CREDITS = { basic: 0, detailed: 1, premium: 2 };
@@ -59,6 +64,26 @@ export function DashboardPage() {
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to start interview');
       setIsStarting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      alert('Type DELETE to confirm account deletion.');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount({
+        currentPassword: deletePassword,
+        confirmation: deleteConfirmation,
+      });
+      alert('Your account and data have been deleted.');
+      navigate('/');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to delete account');
+      setIsDeletingAccount(false);
     }
   };
 
@@ -350,6 +375,68 @@ export function DashboardPage() {
                   </p>
                 </div>
               </div>
+            </Card>
+
+            <Card>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Account</h3>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Permanently delete your account, interviews, payment records, and saved profile data.
+                  </p>
+                </div>
+              </div>
+
+              {!showDeleteAccount ? (
+                <Button
+                  onClick={() => setShowDeleteAccount(true)}
+                  variant="secondary"
+                  className="mt-5 w-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                >
+                  Delete Account
+                </Button>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Current password, if applicable"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  />
+                  <input
+                    value={deleteConfirmation}
+                    onChange={(e) => setDeleteConfirmation(e.target.value)}
+                    placeholder="Type DELETE"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setShowDeleteAccount(false);
+                        setDeleteConfirmation('');
+                        setDeletePassword('');
+                      }}
+                      variant="secondary"
+                      className="flex-1"
+                      disabled={isDeletingAccount}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleDeleteAccount}
+                      variant="danger"
+                      className="flex-1"
+                      disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'}
+                    >
+                      {isDeletingAccount ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card>
           </div>
         </div>

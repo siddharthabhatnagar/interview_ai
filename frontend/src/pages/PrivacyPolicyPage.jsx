@@ -85,8 +85,8 @@ export function PrivacyPolicyPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">5. Data Retention</h2>
             <ul className="list-disc list-inside space-y-2 ml-2">
-              <li><strong>Account Data:</strong> Retained as long as your account is active. You may request deletion at any time.</li>
-              <li><strong>Interview Transcripts &amp; Results:</strong> Stored to provide your interview history and analytics. You may request deletion.</li>
+              <li><strong>Account Data:</strong> Retained as long as your account is active. You may delete your account from the dashboard at any time.</li>
+              <li><strong>Interview Transcripts &amp; Results:</strong> Stored to provide your interview history and analytics. These are deleted when you delete your account.</li>
               <li><strong>Resume &amp; Job Description Text:</strong> Used only during the active interview session and not stored permanently in our database.</li>
               <li><strong>Audio Recordings:</strong> Processed in real-time and not stored after the session ends.</li>
             </ul>
@@ -112,7 +112,7 @@ export function PrivacyPolicyPage() {
               <li>Lodge a complaint with your local data protection authority.</li>
             </ul>
             <p className="mt-3">
-              To exercise any of these rights, contact us at <span className="text-blue-600 dark:text-blue-400">buildifydevelopers@gmail.com</span>.
+              You can delete your account from the dashboard. For other privacy requests, contact us at <span className="text-blue-600 dark:text-blue-400">buildifydevelopers@gmail.com</span>.
             </p>
           </section>
 

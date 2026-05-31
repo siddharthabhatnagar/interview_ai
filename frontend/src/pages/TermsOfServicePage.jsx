@@ -160,7 +160,7 @@ export function TermsOfServicePage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">10. Termination</h2>
             <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>You may delete your account at any time by contacting support.</li>
+              <li>You may delete your account at any time from your dashboard.</li>
               <li>We reserve the right to suspend or terminate your account if you violate these Terms, with or without notice.</li>
               <li>Upon termination, your right to use the Service ceases immediately. Any unused credits will be forfeited.</li>
               <li>Provisions that by their nature should survive termination (e.g., liability limitations, intellectual property) will remain in effect.</li>

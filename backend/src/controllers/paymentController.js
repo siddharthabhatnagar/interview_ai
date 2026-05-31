@@ -23,7 +23,7 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
 
   if (!plan || !PLANS[plan]) {
-    throw new ApiError(400, "Invalid plan. Choose 'starter', 'growth', or 'pro'.");
+    throw new ApiError(400, "Invalid plan. Choose 'test', 'starter', 'growth', or 'pro'.");
   }
 
   const user = await User.findById(userId);

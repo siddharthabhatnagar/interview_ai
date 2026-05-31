@@ -107,5 +107,24 @@ export const useAuthStore = create((set) => ({
       throw error;
     }
   },
+
+  deleteAccount: async ({ currentPassword = '', confirmation = 'DELETE' } = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await apiClient.delete('/auth/account', {
+        data: {
+          currentPassword,
+          confirmation,
+        },
+      });
+      localStorage.removeItem('token');
+      set({ currentUser: null, token: null, loading: false, error: null });
+      return response.data.data;
+    } catch (error) {
+      const errorMessage = getAuthErrorMessage(error, 'Account deletion failed');
+      set({ error: errorMessage, loading: false });
+      throw error;
+    }
+  },
 }));
 

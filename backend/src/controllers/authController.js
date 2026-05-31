@@ -1,5 +1,8 @@
 // Authentication Controller - Phase 1
 import User from '../models/User.js';
+import Interview from '../models/Interview.js';
+import Payment from '../models/Payment.js';
+import OTPVerification from '../models/OTPVerification.js';
 import { ApiResponse, ApiError, asyncHandler } from '../utils/apiResponse.js';
 import jwt from 'jsonwebtoken';
 import env from '../config/env.js';
@@ -270,6 +273,53 @@ export const acceptTerms = asyncHandler(async (req, res) => {
         },
       },
       'Terms accepted successfully'
+    )
+  );
+});
+
+/**
+ * Delete current user account and associated application data.
+ * @route DELETE /api/auth/account
+ * @middleware verifyJWT
+ * @body {currentPassword?, confirmation}
+ */
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { currentPassword, confirmation } = req.body || {};
+
+  if (confirmation !== 'DELETE') {
+    throw new ApiError(400, 'Type DELETE to confirm account deletion');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (user.password && !user.googleId) {
+    if (!currentPassword) {
+      throw new ApiError(400, 'Current password is required to delete this account');
+    }
+
+    const isPasswordCorrect = await user.comparePassword(currentPassword);
+    if (!isPasswordCorrect) {
+      throw new ApiError(401, 'Current password is incorrect');
+    }
+  }
+
+  await Promise.all([
+    Interview.deleteMany({ userId }),
+    Payment.deleteMany({ userId }),
+    OTPVerification.deleteMany({ email: user.email }),
+  ]);
+
+  await User.findByIdAndDelete(userId);
+
+  res.json(
+    new ApiResponse(
+      200,
+      { deleted: true },
+      'Account and associated data deleted successfully'
     )
   );
 });
