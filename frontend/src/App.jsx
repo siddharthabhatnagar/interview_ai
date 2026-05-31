@@ -14,6 +14,7 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { TermsAcceptancePage } from './pages/TermsAcceptancePage';
 import { DocsPage } from './pages/DocsPage';
+import { AccountDeletionPage } from './pages/AccountDeletionPage';
 
 function PrivateRoute({ children }) {
   const { token, currentUser, loading } = useAuthStore();
@@ -67,6 +68,7 @@ function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/account-deletion" element={<AccountDeletionPage />} />
         <Route path="/docs" element={<DocsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

@@ -112,7 +112,7 @@ export function PrivacyPolicyPage() {
               <li>Lodge a complaint with your local data protection authority.</li>
             </ul>
             <p className="mt-3">
-              You can delete your account from the dashboard. For other privacy requests, contact us at <span className="text-blue-600 dark:text-blue-400">buildifydevelopers@gmail.com</span>.
+              You can delete your account from the dashboard. See our <a href="/account-deletion" className="text-blue-600 dark:text-blue-400 hover:underline">Account Deletion Information</a> page for details. For other privacy requests, contact us at <span className="text-blue-600 dark:text-blue-400">buildifydevelopers@gmail.com</span>.
             </p>
           </section>
 
