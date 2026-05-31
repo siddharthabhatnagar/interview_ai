@@ -72,6 +72,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'IntervuAI Backend is running',
+    revision: env.DEPLOY_REVISION,
     timestamp: new Date().toISOString(),
   });
 });

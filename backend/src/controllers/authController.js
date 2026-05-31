@@ -171,10 +171,8 @@ export const googleAuth = asyncHandler(async (req, res) => {
 
   // Find or create user
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
-  let isNewUser = false;
 
   if (!user) {
-    isNewUser = true;
     user = await User.create({
       name,
       email,
@@ -205,7 +203,7 @@ export const googleAuth = asyncHandler(async (req, res) => {
         credits: user.credits,
         termsAccepted: user.termsAccepted, // Include this for frontend
       },
-      requiresTermsAcceptance: isNewUser && !user.termsAccepted, // Flag for frontend
+      requiresTermsAcceptance: !user.termsAccepted,
     }, 'Google sign-in successful')
   );
 });
@@ -259,10 +257,15 @@ export const acceptTerms = asyncHandler(async (req, res) => {
     { new: true }
   );
 
+  const token = jwt.sign(user.getJWT(), env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRE,
+  });
+
   res.json(
     new ApiResponse(
       200,
       {
+        token,
         user: {
           id: user._id,
           name: user.name,

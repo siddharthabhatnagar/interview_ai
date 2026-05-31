@@ -98,8 +98,11 @@ export const useAuthStore = create((set) => ({
         termsAccepted,
         termsVersion,
       });
-      const { user } = response.data.data;
-      set({ currentUser: user, loading: false });
+      const { token, user } = response.data.data;
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+      set({ token: token || localStorage.getItem('token'), currentUser: user, loading: false });
       return response.data.data;
     } catch (error) {
       const errorMessage = getAuthErrorMessage(error, 'Failed to accept terms');
@@ -111,11 +114,9 @@ export const useAuthStore = create((set) => ({
   deleteAccount: async ({ currentPassword = '', confirmation = 'DELETE' } = {}) => {
     set({ loading: true, error: null });
     try {
-      const response = await apiClient.delete('/auth/account', {
-        data: {
-          currentPassword,
-          confirmation,
-        },
+      const response = await apiClient.post('/auth/delete-account', {
+        currentPassword,
+        confirmation,
       });
       localStorage.removeItem('token');
       set({ currentUser: null, token: null, loading: false, error: null });

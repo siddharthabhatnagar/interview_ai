@@ -22,6 +22,7 @@ router.post('/google', googleAuth);
 router.get('/me', verifyJWT, getMe);
 router.post('/refresh', verifyJWT, refreshToken);
 router.post('/accept-terms', verifyJWT, acceptTerms);
+router.post('/delete-account', verifyJWT, deleteAccount);
 router.delete('/account', verifyJWT, deleteAccount);
 
 export default router;
