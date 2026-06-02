@@ -10,6 +10,7 @@ const env = {
   HOST: process.env.HOST || '0.0.0.0',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000',
+  APP_ID: process.env.APP_ID || 'intervu_ai',
 
   // Database
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/intervuai',
@@ -28,6 +29,14 @@ const env = {
   // Razorpay
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+
+  // Firebase Admin / Firestore unified transaction logging
+  FIRESTORE_TRANSACTIONS_ENABLED: process.env.FIRESTORE_TRANSACTIONS_ENABLED !== 'false',
+  FIRESTORE_TRANSACTIONS_COLLECTION: process.env.FIRESTORE_TRANSACTIONS_COLLECTION || 'transactions',
+  FIREBASE_SERVICE_ACCOUNT_JSON: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
 
   // LiveKit
   LIVEKIT_URL: process.env.LIVEKIT_URL,

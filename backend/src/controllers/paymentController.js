@@ -3,6 +3,7 @@ import Payment from '../models/Payment.js';
 import User from '../models/User.js';
 import { ApiResponse, ApiError, asyncHandler } from '../utils/apiResponse.js';
 import { createOrder, verifyPayment, PLANS } from '../services/paymentService.js';
+import { saveUnifiedTransaction } from '../services/firestoreTransactionService.js';
 
 /**
  * Get available plans
@@ -113,6 +114,19 @@ export const verifyPaymentHandler = asyncHandler(async (req, res) => {
   user.credits = (user.credits || 0) + planDetails.credits;
   await user.save();
 
+  let unifiedTransaction = { logged: false };
+  try {
+    unifiedTransaction = await saveUnifiedTransaction({
+      user,
+      payment,
+      planDetails,
+      gateway: 'razorpay',
+    });
+  } catch (error) {
+    unifiedTransaction = { logged: false, error: error.message };
+    console.error('[Payment] Firestore unified transaction logging failed:', error.message);
+  }
+
   res.json(
     new ApiResponse(200, {
       payment: {
@@ -126,6 +140,7 @@ export const verifyPaymentHandler = asyncHandler(async (req, res) => {
         credits: user.credits,
         subscriptionEndDate: user.subscriptionEndDate,
       },
+      unifiedTransaction,
     }, 'Payment verified and subscription activated')
   );
 });
