@@ -16,7 +16,7 @@ const router = express.Router();
 router.get('/plans', getPlans);
 
 // Protected routes requiring terms acceptance
-router.get('/firestore-status', verifyJWT, getFirestoreStatus);
+router.get('/firestore-status', getFirestoreStatus); // Public: read-only diagnostics, no sensitive data
 router.post('/create-order', verifyJWT, verifyTermsAcceptance, createPaymentOrder);
 router.post('/verify', verifyJWT, verifyTermsAcceptance, verifyPaymentHandler);
 router.get('/history', verifyJWT, verifyTermsAcceptance, getPaymentHistory);
