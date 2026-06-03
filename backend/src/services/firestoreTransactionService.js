@@ -5,6 +5,7 @@ let firestoreDb = null;
 let initializationAttempted = false;
 let lastInitError = null;
 let lastLoggedTransactionAt = null;
+let lastWriteError = null;
 
 function normalizePrivateKey(value) {
   return value?.replace(/\\n/g, '\n');
@@ -108,7 +109,14 @@ export async function saveUnifiedTransaction({
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
   };
 
-  await transactionRef.set(transactionRecord, { merge: true });
+  try {
+    await transactionRef.set(transactionRecord, { merge: true });
+  } catch (error) {
+    lastWriteError = error.message;
+    throw error;
+  }
+
+  lastWriteError = null;
   lastLoggedTransactionAt = new Date().toISOString();
   console.log('[Firestore] Unified transaction logged:', {
     transactionId,
@@ -131,6 +139,7 @@ export function getFirestoreTransactionStatus() {
     collection: env.FIRESTORE_TRANSACTIONS_COLLECTION,
     appId: env.APP_ID,
     lastInitError,
+    lastWriteError,
     lastLoggedTransactionAt,
   };
 }
