@@ -247,6 +247,7 @@ export const processAudio = asyncHandler(async (req, res) => {
       interview.summary = await generateInterviewSummary(questionsData, {
         interviewType: interview.interviewType,
         difficultyLevel: interview.difficultyLevel,
+        analysisType: interview.analysisType || 'basic',
       });
     } catch (summaryError) {
       console.error('Failed to generate summary:', summaryError.message);
@@ -385,6 +386,7 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
     interviewType,
     difficultyLevel,
     duration,
+    analysisType,
     maxQuestions,
     candidateLevel,
     userName: user.name,
@@ -414,6 +416,9 @@ export const startLiveInterview = asyncHandler(async (req, res) => {
         token,
         roomName,
         status: interview.status,
+        analysisType,
+        coachMode: !!coachMode,
+        creditsUsed: totalCredits,
         agentStatus: getAgentStatus(),
       },
       'Live interview started successfully'
@@ -551,6 +556,33 @@ export const saveLiveResults = asyncHandler(async (req, res) => {
     });
   } catch (err) {
     interview.summary = `Live interview completed. Overall score: ${interview.overallScore}%.`;
+  }
+
+  if (interview.analysisType === 'premium' && questions.length > 0) {
+    try {
+      const questionsData = questions
+        .filter(q => q.aiEvaluation)
+        .map(q => ({
+          question: q.questionText,
+          response: q.candidateResponse,
+          score: q.aiEvaluation.score,
+        }));
+
+      if (questionsData.length > 0) {
+        const roadmap = await generateImprovementRoadmap(questionsData, {
+          interviewType: interview.interviewType,
+          difficultyLevel: interview.difficultyLevel,
+        });
+        interview.improvementRoadmap = {
+          generatedAt: new Date(),
+          weeklyPlan: roadmap.weeklyPlan,
+          topWeaknesses: roadmap.topWeaknesses || [],
+          resources: roadmap.resources || [],
+        };
+      }
+    } catch (err) {
+      console.error('Roadmap generation failed:', err.message);
+    }
   }
 
   // Store raw transcript
@@ -739,8 +771,8 @@ export const completeLiveInterview = asyncHandler(async (req, res) => {
       interview.summary = `Interview completed. Score: ${interview.overallScore || 0}%.`;
     }
   }
-  // Generate improvement roadmap
-  if (interview.questions.length > 0) {
+  // Generate improvement roadmap for premium analysis only.
+  if (interview.analysisType === 'premium' && interview.questions.length > 0) {
     try {
       const questionsData = interview.questions
         .filter(q => q.aiEvaluation)

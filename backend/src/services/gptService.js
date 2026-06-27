@@ -197,7 +197,7 @@ Return ONLY the question text, no additional formatting.`;
 /**
  * Mock evaluation for responses
  */
-function getMockEvaluation(question, response) {
+function getMockEvaluation(question, response, analysisType = 'basic') {
   const wordCount = response?.split(/\s+/).length || 0;
   let score = 65;
   let feedback = 'Good attempt. ';
@@ -215,11 +215,34 @@ function getMockEvaluation(question, response) {
   
   feedback += 'Consider adding real-world examples or tradeoffs. ';
   
-  return {
+  const baseEvaluation = {
     score,
+    technicalAccuracy: Math.max(0, Math.min(100, score - 3)),
+    communicationClarity: Math.max(0, Math.min(100, score + 2)),
+    problemSolving: score,
+    depthOfKnowledge: Math.max(0, Math.min(100, score - 5)),
+    practicalExperience: Math.max(0, Math.min(100, score - 4)),
     feedback,
-    followUpQuestion: 'Can you explain how you would handle edge cases in your solution?'
+    followUpQuestion: 'Can you explain how you would handle edge cases in your solution?',
   };
+
+  if (analysisType === 'detailed') {
+    return {
+      ...baseEvaluation,
+      feedback: `${feedback} A stronger answer would explain the implementation path, the key trade-off, and one concrete failure case to watch for.`,
+    };
+  }
+
+  if (analysisType === 'premium') {
+    return {
+      ...baseEvaluation,
+      feedback: `${feedback} A stronger answer would compare alternatives, mention production constraints, and connect the concept to a real project or incident.`,
+      improvementTip: 'Use a concrete project example and explain one trade-off you considered.',
+      estimatedLevel: score >= 75 ? 'mid' : 'junior',
+    };
+  }
+
+  return baseEvaluation;
 }
 
 /**
@@ -364,7 +387,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown:
   } catch (error) {
     console.error('Response Evaluation Error:', error.message);
     console.log('⚠️ Falling back to mock evaluation');
-    return getMockEvaluation(question, response);
+    return getMockEvaluation(question, response, analysisType);
   }
 };
 

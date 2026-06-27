@@ -271,22 +271,23 @@ export function ResultsPage() {
   const analysisType = currentInterview.analysisType || 'basic';
   const isPremium = analysisType === 'premium';
   const isDetailed = analysisType === 'detailed' || isPremium;
+  const visibleCategoryAverages = isDetailed ? categoryAverages : null;
 
-  const radarCategories = categoryAverages ? [
-    { label: 'Technical', score: categoryAverages.technicalAccuracy },
-    { label: 'Communication', score: categoryAverages.communicationClarity },
-    { label: 'Problem Solving', score: categoryAverages.problemSolving },
-    { label: 'Depth', score: categoryAverages.depthOfKnowledge },
-    { label: 'Experience', score: categoryAverages.practicalExperience },
+  const radarCategories = visibleCategoryAverages ? [
+    { label: 'Technical', score: visibleCategoryAverages.technicalAccuracy },
+    { label: 'Communication', score: visibleCategoryAverages.communicationClarity },
+    { label: 'Problem Solving', score: visibleCategoryAverages.problemSolving },
+    { label: 'Depth', score: visibleCategoryAverages.depthOfKnowledge },
+    { label: 'Experience', score: visibleCategoryAverages.practicalExperience },
   ] : null;
 
   // Find strongest and weakest categories
-  const strengths = categoryAverages ? Object.entries(categoryAverages)
+  const strengths = visibleCategoryAverages ? Object.entries(visibleCategoryAverages)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 2)
     .map(([key]) => key.replace(/([A-Z])/g, ' $1').trim()) : [];
 
-  const weaknesses = categoryAverages ? Object.entries(categoryAverages)
+  const weaknesses = visibleCategoryAverages ? Object.entries(visibleCategoryAverages)
     .sort(([,a], [,b]) => a - b)
     .slice(0, 2)
     .map(([key]) => key.replace(/([A-Z])/g, ' $1').trim()) : [];
@@ -346,15 +347,15 @@ export function ResultsPage() {
         </div>
 
         {/* Category Score Bars */}
-        {categoryAverages && (
+        {visibleCategoryAverages && (
           <Card className="mb-8">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-5">Category Breakdown</h3>
             <div className="space-y-4">
-              <ScoreBar label="Technical Accuracy" score={categoryAverages.technicalAccuracy} />
-              <ScoreBar label="Communication Clarity" score={categoryAverages.communicationClarity} />
-              <ScoreBar label="Problem Solving" score={categoryAverages.problemSolving} />
-              <ScoreBar label="Depth of Knowledge" score={categoryAverages.depthOfKnowledge} />
-              <ScoreBar label="Practical Experience" score={categoryAverages.practicalExperience} />
+              <ScoreBar label="Technical Accuracy" score={visibleCategoryAverages.technicalAccuracy} />
+              <ScoreBar label="Communication Clarity" score={visibleCategoryAverages.communicationClarity} />
+              <ScoreBar label="Problem Solving" score={visibleCategoryAverages.problemSolving} />
+              <ScoreBar label="Depth of Knowledge" score={visibleCategoryAverages.depthOfKnowledge} />
+              <ScoreBar label="Practical Experience" score={visibleCategoryAverages.practicalExperience} />
             </div>
 
             {/* Strengths & Weaknesses pills */}
@@ -531,7 +532,7 @@ export function ResultsPage() {
         )}
 
         {/* Improvement Roadmap */}
-        {currentInterview.improvementRoadmap && currentInterview.improvementRoadmap.weeklyPlan && (
+        {isPremium && currentInterview.improvementRoadmap && currentInterview.improvementRoadmap.weeklyPlan && (
           <Card className="mb-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
@@ -618,7 +619,7 @@ export function ResultsPage() {
                 {q.aiEvaluation && (
                   <div className="space-y-4">
                     {/* Mini category bars for this question */}
-                    {q.aiEvaluation.technicalAccuracy !== undefined && (
+                    {isDetailed && q.aiEvaluation.technicalAccuracy !== undefined && (
                       <div className="grid grid-cols-5 gap-2">
                         {[
                           { label: 'Tech', score: q.aiEvaluation.technicalAccuracy },

@@ -59,6 +59,8 @@ export function DashboardPage() {
           livekitToken: response.token,
           interviewType: selectedType,
           difficultyLevel: selectedLevel,
+          analysisType: selectedAnalysis,
+          coachMode,
         },
       });
     } catch (error) {

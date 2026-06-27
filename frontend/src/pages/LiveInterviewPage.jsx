@@ -76,6 +76,8 @@ export function LiveInterviewPage() {
         const livekitUrl = location.state?.livekitUrl;
         const interviewType = location.state?.interviewType;
         const difficultyLevel = location.state?.difficultyLevel;
+        const analysisType = location.state?.analysisType || 'basic';
+        const coachMode = Boolean(location.state?.coachMode);
 
         if (!livekitToken || !livekitUrl) {
           setErrorMessage('LiveKit connection info not available. Please start a new interview from the dashboard.');
@@ -83,7 +85,7 @@ export function LiveInterviewPage() {
           return;
         }
 
-        setInterviewData({ interviewType, difficultyLevel });
+        setInterviewData({ interviewType, difficultyLevel, analysisType, coachMode });
 
         // Create and connect to LiveKit room
         const room = new Room({
@@ -403,6 +405,16 @@ export function LiveInterviewPage() {
             <span className="text-gray-400 text-sm capitalize">
               {interviewData?.interviewType} • {interviewData?.difficultyLevel}
             </span>
+            {interviewData?.coachMode && (
+              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+                Coach Mode
+              </span>
+            )}
+            {interviewData?.analysisType && (
+              <span className="rounded-full bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-300 capitalize">
+                {interviewData.analysisType} Analysis
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-6">
